@@ -38,8 +38,8 @@ test("recuperação de senha pelo link do e-mail", async ({ page }) => {
   // volta a senha do exemplo para os outros testes
   await page.goto("/configuracoes?aba=acesso");
   await page.fill("#current", "nova-senha-do-admin");
-  await page.fill("#next", "fightmanager123");
-  await page.fill("#confirm", "fightmanager123");
+  await page.fill("#next", "kombexa123");
+  await page.fill("#confirm", "kombexa123");
   await page.getByRole("button", { name: "Trocar senha" }).click();
   await expect(toast(page)).toContainText("Senha alterada");
 });

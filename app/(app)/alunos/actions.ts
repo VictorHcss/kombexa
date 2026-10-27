@@ -7,7 +7,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { handleForm, type ActionState } from "@/lib/action";
 import { requireAcademyAdmin } from "@/lib/auth/guards";
-import { guardianInput, studentInput } from "@/lib/validation";
+import { guardianInput, rankInput, studentInput } from "@/lib/validation";
+import { addRank, removeRank } from "@/services/ranks";
 import { DomainError } from "@/lib/errors";
 import { isValidDate, todayIn } from "@/lib/dates";
 import { removeGuardian, saveGuardian, searchGuardians, setPrimaryGuardian } from "@/services/guardians";
@@ -139,4 +140,20 @@ export async function guardianAccessAction(form: FormData) {
   }
   revalidatePath(`/alunos/${studentId}`);
   redirect(`${back}&ok=${form.get("revoke") ? "responsavel-sem-acesso" : "responsavel-com-acesso"}`);
+}
+
+/** Graduação: registrada pela equipe, nunca pelo aluno. */
+export async function addRankAction(studentId: string, _: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await requireAcademyAdmin("alunos");
+  let ok = false;
+  const state = await handleForm(form, rankInput, async (data) => { await addRank(ctx, studentId, data); ok = true; });
+  if (!ok) return state;
+  back(studentId, "graduacoes", "graduacao-registrada");
+  return {};
+}
+
+export async function removeRankAction(form: FormData) {
+  const ctx = await requireAcademyAdmin("alunos");
+  const id = String(form.get("studentId"));
+  await guarded(id, () => removeRank(ctx, String(form.get("rankId"))), "graduacoes", "graduacao-removida");
 }

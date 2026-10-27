@@ -62,7 +62,7 @@
 
 /* Pix na área do aluno */
 .pix { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.2rem; align-items: center; }
-.pix-qr { display: block; width: 176px; height: 176px; padding: 8px; border-radius: 12px; background: #fff; border: 1px solid var(--line); image-rendering: pixelated; }
+.pix-qr { display: block; width: 176px; height: 176px; padding: 8px; border-radius: 12px; background: #ffffff; border: 1px solid var(--line); image-rendering: pixelated; }
 .pix-info { display: grid; gap: 0.7rem; min-width: 0; }
 .pix-amount { display: grid; margin: 0; }
 .pix-amount span, .pix-amount small { font-size: 0.8rem; color: var(--muted); }

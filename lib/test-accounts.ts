@@ -3,7 +3,7 @@
  * São só para desenvolvimento e demonstração: as senhas são públicas.
  * A tela de login mostra estas contas quando SHOW_TEST_ACCOUNTS permite (ver showTestAccounts).
  */
-export const TEST_PASSWORD = "fightmanager123";
+export const TEST_PASSWORD = "kombexa123";
 
 export interface TestAccount {
   email: string;
@@ -19,7 +19,7 @@ export const TEST_ACCOUNTS: TestAccount[] = [
   { email: "responsavel@academia.dev", role: "STUDENT", label: "Responsável com acesso", description: "Mãe de dois alunos menores: vê situação, Pix e recibos dos dependentes." },
   { email: "pendente@academia.dev", role: "STUDENT", label: "Aluno aguardando aprovação", description: "Pediu para entrar pelo convite; aparece em Solicitações." },
   { email: "semacademia@academia.dev", role: "STUDENT", label: "Aluno sem academia", description: "Criou a conta sozinho; a academia pode adicioná-lo pelo e-mail." },
-  { email: "plataforma@fightmanager.dev", role: "PLATFORM_ADMIN", label: "Administrador da plataforma", description: "Visão de todas as academias cadastradas." },
+  { email: "plataforma@kombexa.dev", role: "PLATFORM_ADMIN", label: "Administrador da plataforma", description: "Visão de todas as academias cadastradas." },
 ];
 
 /**

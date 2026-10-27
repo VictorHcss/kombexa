@@ -50,7 +50,7 @@ async function main() {
     ].join("\n"),
   }).returning();
   const [admin] = await db.insert(users).values({ academyId: academy.id, role: "ACADEMY_ADMIN", name: "Rodrigo Alves", email: "admin@academia.dev", passwordHash: await hashPassword(PASSWORD) }).returning();
-  await db.insert(users).values({ academyId: null, role: "PLATFORM_ADMIN", name: "Administrador da plataforma", email: "plataforma@fightmanager.dev", passwordHash: await hashPassword(PASSWORD) });
+  await db.insert(users).values({ academyId: null, role: "PLATFORM_ADMIN", name: "Administrador da plataforma", email: "plataforma@kombexa.dev", passwordHash: await hashPassword(PASSWORD) });
   const ctx: AcademyContext = { userId: admin.id, academyId: academy.id, role: "ACADEMY_ADMIN" };
   const fees: Record<string, number> = { Boxe: 15000, "Muay Thai": 16000, "Jiu-Jitsu": 18000, MMA: 20000, Kickboxing: 14000, "Boxe Infantil": 11000 };
   const mods = await db.insert(modalities).values(Object.entries(fees).map(([name, cents]) => ({ academyId: academy.id, name, defaultFeeCents: cents }))).returning();
@@ -199,7 +199,7 @@ async function ensureStudentAccounts(academyId: string, adminId: string): Promis
   await db.update(academies).set({ pixKey: "52998224725" }).where(and(eq(academies.id, academyId), isNull(academies.pixKey)));
   // contas de exemplo já confirmadas, menos o pedido pendente (mostra o aviso "e-mail não confirmado")
   await db.update(users).set({ emailVerifiedAt: new Date() })
-    .where(and(isNull(users.emailVerifiedAt), inArray(users.email, ["aluno@academia.dev", "semacademia@academia.dev", "admin@academia.dev", "plataforma@fightmanager.dev"])));
+    .where(and(isNull(users.emailVerifiedAt), inArray(users.email, ["aluno@academia.dev", "semacademia@academia.dev", "admin@academia.dev", "plataforma@kombexa.dev"])));
   return created;
 }
 

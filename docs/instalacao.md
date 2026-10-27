@@ -58,7 +58,7 @@ Reset sem Docker: `dropdb fight_manager && createdb fight_manager && npm run db:
 
 ### Contas
 
-- Com o seed, todas com a senha `fightmanager123`: `plataforma@fightmanager.dev` (plataforma), `admin@academia.dev` (academia), `aluno@academia.dev` (aluno aprovado), `pendente@academia.dev` (aluno aguardando aprovação) e `semacademia@academia.dev` (aluno sem academia). A tela de login mostra essas contas em desenvolvimento ou com `SHOW_TEST_ACCOUNTS=true`.
+- Com o seed, todas com a senha `kombexa123`: `plataforma@kombexa.dev` (plataforma), `admin@academia.dev` (academia), `aluno@academia.dev` (aluno aprovado), `pendente@academia.dev` (aluno aguardando aprovação) e `semacademia@academia.dev` (aluno sem academia). A tela de login mostra essas contas em desenvolvimento ou com `SHOW_TEST_ACCOUNTS=true`.
 - Os scripts (`db:migrate`, `db:seed`, `db:create-admin`, `email:test`) leem o `.env` da raiz sozinhos; variáveis já definidas no ambiente têm prioridade.
 - E-mail: veja a seção "Configurar o envio de e-mails" mais abaixo.
 - Uso real: crie o administrador da plataforma com `ADMIN_PASSWORD="..." npm run db:create-platform-admin -- "Seu Nome" voce@email.com` e, pela tela `/plataforma`, as academias. O script `ADMIN_PASSWORD="..." npm run db:create-admin -- "Academia" "Nome" email@dominio.com` continua disponível para criar uma academia direto pelo terminal.
@@ -133,8 +133,8 @@ O `Dockerfile` gera uma imagem de produção que aplica as migrations pendentes 
 ### Exemplo com a própria imagem
 
 ```bash
-docker build -t fight-manager .
-docker run -d -p 3000:3000 -e DATABASE_URL="postgres://usuario:senha@host:5432/fight_manager" fight-manager
+docker build -t kombexa .
+docker run -d -p 3000:3000 -e DATABASE_URL="postgres://usuario:senha@host:5432/fight_manager" kombexa
 docker exec -it <container> sh -c 'ADMIN_PASSWORD="..." npm run db:create-admin -- "Academia" "Nome" email@dominio.com'
 ```
 
@@ -146,7 +146,7 @@ docker exec -it <container> sh -c 'ADMIN_PASSWORD="..." npm run db:create-admin 
 
 ## Configurar o envio de e-mails
 
-O Fight Manager envia e-mails em quatro situações:
+O Kombexa envia e-mails em quatro situações:
 
 | E-mail | Quando | Para quem |
 |---|---|---|
@@ -191,7 +191,7 @@ Serve para qualquer provedor que ofereça SMTP. Para começar ou para pouco volu
 O Gmail não aceita a senha normal da conta por SMTP. É preciso uma **senha de app**:
 
 1. Ative a verificação em duas etapas na Conta Google (Segurança → Verificação em duas etapas).
-2. Em Segurança → Senhas de app, crie uma senha para "Fight Manager". O Google mostra 16 letras; copie.
+2. Em Segurança → Senhas de app, crie uma senha para "Kombexa". O Google mostra 16 letras; copie.
 3. No `.env`:
 
 ```env
@@ -306,7 +306,7 @@ Sem configurar nada, os e-mails aparecem no terminal de `npm run dev`:
 
 ```text
 [e-mail de desenvolvimento] para admin@academia.dev
-Assunto: Redefinir sua senha no Fight Manager
+Assunto: Redefinir sua senha no Kombexa
 ...
 ```
 
@@ -363,7 +363,7 @@ Sem Docker: `DATABASE_URL=postgres://... BACKUP_DIR=/caminho sh scripts/backup.s
 ```bash
 # banco vazio de destino
 createdb -U fight fight_manager_restaurado
-pg_restore --no-owner --dbname=postgres://fight:fight@localhost:5432/fight_manager_restaurado backups/fight-manager-AAAA-MM-DD_HHMM.dump
+pg_restore --no-owner --dbname=postgres://fight:fight@localhost:5432/fight_manager_restaurado backups/kombexa-AAAA-MM-DD_HHMM.dump
 ```
 
 Teste a restauração de vez em quando: backup que nunca foi restaurado não é garantia.

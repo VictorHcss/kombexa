@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, type ReactNode } from "react";
 import { initials } from "@/lib/initials";
 import { Brand } from "./Brand";
+import { ThemeToggle } from "./ThemeToggle";
 import { can, hasFullAccess, type Permission } from "@/lib/permissions";
 
 const icon = (d: string, size = 20) => <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true"><path d={d} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
@@ -22,6 +23,7 @@ const P = {
   settings: "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z",
   book: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5zM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5",
   plus: "M12 5v14M5 12h14",
+  megaphone: "M3 11v2a1 1 0 0 0 1 1h2l5 4V6L6 10H4a1 1 0 0 0-1 1zM15 9a3 3 0 0 1 0 6M18 6a7 7 0 0 1 0 12",
   more: "M5 12h.01M12 12h.01M19 12h.01",
   logout: "M15 17l5-5-5-5M20 12H9M12 20H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h7",
 };
@@ -40,6 +42,7 @@ const GROUPS: { label: string; items: Item[] }[] = [
   { label: "Academia", items: [
     { href: "/solicitacoes", label: "Solicitações", icon: "inbox", needs: "solicitacoes" },
     { href: "/convidar", label: "Convidar alunos", icon: "qr", needs: "solicitacoes" },
+    { href: "/comunicados", label: "Comunicados", icon: "megaphone", needs: "comunicados" },
     { href: "/configuracoes", label: "Configurações", icon: "settings" },
   ] },
   { label: "Sistema", items: [
@@ -84,6 +87,7 @@ export function Shell({ academy, user, logout, requests, permissions, children }
           <div className="user-menu-panel">
             <p className="user-menu-who"><strong>{user}</strong><small>{role} · {academy}</small></p>
             <Link href="/configuracoes?aba=acesso">{icon(P.settings, 18)}Minha senha e acessos</Link>
+            <div className="user-menu-theme"><span>Tema</span><ThemeToggle /></div>
             <form action={logout}><button type="submit">{icon(P.logout, 18)}Sair</button></form>
           </div>
         </details>
@@ -105,6 +109,7 @@ export function Shell({ academy, user, logout, requests, permissions, children }
             </div>
           ))}
         </nav>
+        <div className="sidebar-theme"><ThemeToggle className="theme-toggle--on-dark" /></div>
         <form action={logout} className="sidebar-user">
           <span className="avatar" aria-hidden="true">{initials(user)}</span>
           <span className="sidebar-user-text"><strong>{user}</strong><small>{role}</small></span>

@@ -20,13 +20,17 @@ import { guardiansOf, isMinor } from "@/services/guardians";
 import { listPayments } from "@/services/payments";
 import { getHealth, getStudent, studentFinancialSummary } from "@/services/students";
 import { cancelPaymentAction } from "../../pagamentos/actions";
+import { addRankAction, removeRankAction } from "../actions";
+import { RankForm } from "../ProfileForms";
+import { listRanks } from "@/services/ranks";
+import { listModalities } from "@/services/academy";
 import { anonymizeAction, guardianAccessAction, primaryGuardianAction, removeGuardianAction, saveGuardianAction, saveHealthAction, signedAction, toggleStudentStatusAction } from "../actions";
 import { EraseForm, GuardianForm, HealthForm } from "../ProfileForms";
 
 export const metadata: Metadata = { title: "Aluno" };
 
 const SITUATION = { ok: "Em dia", pending: "A vencer", overdue: "Atrasado" } as const;
-const TABS = [["info", "Cadastro"], ["mensalidades", "Mensalidades"], ["pagamentos", "Pagamentos"], ["saude", "Saúde"], ["historico", "Histórico"]] as const;
+const TABS = [["info", "Cadastro"], ["mensalidades", "Mensalidades"], ["pagamentos", "Pagamentos"], ["graduacoes", "Graduações"], ["saude", "Saúde"], ["historico", "Histórico"]] as const;
 
 export default async function StudentPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ aba?: string; erro?: string }> }) {
   const ctx = await requireAcademyAdmin("alunos");
@@ -224,6 +228,7 @@ export default async function StudentPage({ params, searchParams }: { params: Pr
       )}
 
       {aba === "saude" && can(ctx.permissions, "saude") && <Health studentId={s.id} ctx={ctx} />}
+      {aba === "graduacoes" && <Ranks ctx={ctx} studentId={s.id} modalityId={s.modalityId} />}
       {aba === "historico" && <History ctx={ctx} studentId={s.id} />}
     </>
   );
@@ -237,6 +242,37 @@ async function Health({ ctx, studentId }: { ctx: Awaited<ReturnType<typeof requi
       <p className="small muted" style={{ marginTop: 0 }}>Dado sensível pela LGPD. Aparece só aqui: não entra em listas, buscas, mensagens nem na ficha impressa, a menos que você marque para incluir. Alterações ficam registradas na auditoria, sem o conteúdo.</p>
       <HealthForm action={saveHealthAction.bind(null, studentId)} notes={health.notes ?? ""} consentAt={health.consentAt ? formatDateTime(health.consentAt) : null} />
     </Card>
+  );
+}
+
+async function Ranks({ ctx, studentId, modalityId }: { ctx: Awaited<ReturnType<typeof requireAcademyAdmin>>; studentId: string; modalityId: string | null }) {
+  const [ranks, mods] = await Promise.all([listRanks(ctx, studentId), listModalities(ctx)]);
+  return (
+    <>
+      <Card title="Graduação atual">
+        {ranks.length === 0 ? <Empty title="Nenhuma graduação registrada" text="Registre a faixa ou corda atual do aluno. Ele vê o histórico na Área do Aluno." /> : (
+          <p className="rank-current"><strong>{ranks[0].rank}</strong><span className="small muted">{[ranks[0].modality, `desde ${formatDate(ranks[0].awardedAt)}`].filter(Boolean).join(" · ")}</span></p>
+        )}
+      </Card>
+      <Card title="Registrar graduação">
+        <RankForm action={addRankAction.bind(null, studentId)} modalities={mods.filter((m) => m.active || m.id === modalityId)} defaultModality={modalityId} today={todayIn(ctx.timezone)} />
+      </Card>
+      {ranks.length > 0 && (
+        <Card title={`Histórico (${ranks.length})`}>
+          <ul className="rank-list">
+            {ranks.map((r) => (
+              <li key={r.id}>
+                <div><strong>{r.rank}</strong><span className="small muted">{[formatDate(r.awardedAt), r.modality, r.awardedBy && `por ${r.awardedBy}`].filter(Boolean).join(" · ")}</span>{r.notes && <span className="small">{r.notes}</span>}</div>
+                <form action={removeRankAction}>
+                  <input type="hidden" name="studentId" value={studentId} /><input type="hidden" name="rankId" value={r.id} />
+                  <ConfirmSubmit className="btn btn--small btn--ghost-danger" title="Remover registro" confirmLabel="Remover" message={`Remover o registro "${r.rank}" de ${formatDate(r.awardedAt)}? Use só para corrigir um lançamento errado. A remoção fica na auditoria.`}>Remover</ConfirmSubmit>
+                </form>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+    </>
   );
 }
 

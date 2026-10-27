@@ -7,8 +7,11 @@
  */
 import { relations, sql } from "drizzle-orm";
 import {
-  boolean, check, date, index, primaryKey, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid, varchar, type AnyPgColumn,
+  boolean, check, customType, date, index, primaryKey, integer, jsonb, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid, varchar, type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+
+/** Conteúdo binário (logo da academia). O driver devolve Buffer. */
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => "bytea" });
 
 export const userRole = pgEnum("user_role", ["PLATFORM_ADMIN", "ACADEMY_ADMIN", "STUDENT"]);
 // pending = pediu para entrar pelo convite; rejected = pedido recusado (fica no histórico).
@@ -42,6 +45,8 @@ export const academies = pgTable("academies", {
   name: varchar("name", { length: 120 }).notNull(),
   active: boolean("active").notNull().default(true),
   document: varchar("document", { length: 18 }), // CPF ou CNPJ, se a academia usar na ficha
+  legalName: varchar("legal_name", { length: 160 }), // razão social (contratos), opcional
+  ownerName: varchar("owner_name", { length: 120 }), // responsável legal pela academia (contratos), opcional
   phone: varchar("phone", { length: 20 }),
   email: varchar("email", { length: 160 }),
   ...address,
@@ -166,6 +171,10 @@ export const students = pgTable("students", {
   healthNotes: text("health_notes"),
   healthConsentAt: timestamp("health_consent_at", { withTimezone: true }),
   enrollmentSignedAt: date("enrollment_signed_at"), // ficha de matrícula assinada
+  // código pessoal do QR Code de presença (aleatório, sem dados pessoais). null = ainda não gerado.
+  // Gerar um novo invalida o anterior.
+  checkinCode: varchar("checkin_code", { length: 16 }).unique(),
+  checkinCodeCreatedAt: timestamp("checkin_code_created_at", { withTimezone: true }),
   // consentimento dado no cadastro pelo convite (LGPD): quando e qual texto foi aceito
   dataConsentAt: timestamp("data_consent_at", { withTimezone: true }),
   dataConsentText: text("data_consent_text"),
@@ -300,6 +309,51 @@ export const auditLogs = pgTable("audit_logs", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [index("audit_academy_date_idx").on(t.academyId, t.createdAt)]);
 
+/**
+ * Logo da academia (identidade dos documentos dela). Uma por academia, guardada no próprio
+ * PostgreSQL: funciona em qualquer hospedagem, inclusive com disco efêmero, e entra no backup.
+ * Só PNG, JPEG ou WebP conferidos pelo conteúdo (ver lib/image.ts).
+ */
+export const academyLogos = pgTable("academy_logos", {
+  academyId: uuid("academy_id").primaryKey().references(() => academies.id, { onDelete: "cascade" }),
+  mime: varchar("mime", { length: 20 }).notNull(),
+  data: bytea("data").notNull(),
+  sizeBytes: integer("size_bytes").notNull(),
+  width: integer("width").notNull(),
+  height: integer("height").notNull(),
+  sha256: varchar("sha256", { length: 64 }).notNull(),
+  uploadedBy: uuid("uploaded_by").references(() => users.id, { onDelete: "set null" }),
+  ...timestamps,
+}, (t) => [check("academy_logos_not_empty", sql`octet_length(${t.data}) > 0 and ${t.sizeBytes} > 0`)]);
+
+/** Comunicados da academia para os alunos (mural). Arquivar tira do mural sem apagar. */
+export const announcements = pgTable("announcements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  academyId: uuid("academy_id").notNull().references(() => academies.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 120 }).notNull(),
+  body: text("body").notNull(),
+  category: varchar("category", { length: 20 }).notNull().default("geral"), // geral | horario | feriado | evento | graduacao
+  pinned: boolean("pinned").notNull().default(false),
+  publishedAt: timestamp("published_at", { withTimezone: true }).notNull().defaultNow(),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  ...timestamps,
+}, (t) => [index("announcements_academy_idx").on(t.academyId, t.publishedAt)]);
+
+/** Graduações (faixas/cordas/graus) registradas pela academia. Histórico: cada promoção é uma linha. */
+export const studentRanks = pgTable("student_ranks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  academyId: uuid("academy_id").notNull().references(() => academies.id, { onDelete: "cascade" }),
+  studentId: uuid("student_id").notNull().references(() => students.id, { onDelete: "cascade" }),
+  modalityId: uuid("modality_id").references(() => modalities.id, { onDelete: "set null" }),
+  rank: varchar("rank", { length: 60 }).notNull(), // ex.: "Faixa azul, 2º grau"
+  awardedAt: date("awarded_at").notNull(),
+  awardedBy: varchar("awarded_by", { length: 120 }), // professor/mestre que graduou (texto livre)
+  notes: varchar("notes", { length: 200 }),
+  createdBy: uuid("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [index("student_ranks_student_idx").on(t.studentId, t.awardedAt)]);
+
 export const studentsRelations = relations(students, ({ many }) => ({ fees: many(fees), payments: many(payments) }));
 export const feesRelations = relations(fees, ({ one, many }) => ({
   student: one(students, { fields: [fees.studentId], references: [students.id] }),
@@ -318,4 +372,6 @@ export type Guardian = typeof guardians.$inferSelect;
 export type Academy = typeof academies.$inferSelect;
 export type Fee = typeof fees.$inferSelect;
 export type Payment = typeof payments.$inferSelect;
+export type Announcement = typeof announcements.$inferSelect;
+export type StudentRank = typeof studentRanks.$inferSelect;
 export type FinancialEntry = typeof financialEntries.$inferSelect;

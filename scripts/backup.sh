@@ -7,9 +7,10 @@ set -eu
 BACKUP_DIR="${BACKUP_DIR:-./backups}"
 KEEP_DAYS="${KEEP_DAYS:-14}"
 mkdir -p "$BACKUP_DIR"
-FILE="$BACKUP_DIR/fight-manager-$(date +%Y-%m-%d_%H%M).dump"
+FILE="$BACKUP_DIR/kombexa-$(date +%Y-%m-%d_%H%M).dump"
 # formato custom (-Fc): compactado e restaurável tabela a tabela com pg_restore
 pg_dump --format=custom --no-owner --dbname="$DATABASE_URL" --file="$FILE.tmp"
 mv "$FILE.tmp" "$FILE"
-find "$BACKUP_DIR" -name 'fight-manager-*.dump' -mtime +"$KEEP_DAYS" -delete
+# backups antigos com o nome anterior (fight-manager-*) também entram na limpeza
+find "$BACKUP_DIR" \( -name 'kombexa-*.dump' -o -name 'fight-manager-*.dump' \) -mtime +"$KEEP_DAYS" -delete
 echo "Backup salvo em $FILE"

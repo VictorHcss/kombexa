@@ -5,7 +5,7 @@
 .access-link p { margin: 0 0 0.6rem; }
 .access-link p.small { margin: 0.5rem 0 0; }
 .access-link-row { display: flex; gap: 0.5rem; }
-.access-link-row input { flex: 1; min-width: 0; min-height: 36px; padding: 0.3rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 8px; font: 500 0.85rem var(--font); background: #fff; }
+.access-link-row input { flex: 1; min-width: 0; min-height: 36px; padding: 0.3rem 0.6rem; border: 1px solid var(--line-strong); border-radius: 8px; font: 500 0.85rem var(--font); background: var(--surface); color: var(--ink); }
 .resend { display: grid; justify-items: end; gap: 0.4rem; }
 .resend .access-link { text-align: left; width: min(420px, 80vw); margin: 0.4rem 0 0; }
 @media (max-width: 719px) { .resend { justify-items: start; } }
@@ -14,7 +14,7 @@
 .create-academy { margin-bottom: 1rem; }
 .create-academy > summary { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0.3rem 1rem; cursor: pointer; list-style: none; font-weight: 750; }
 .create-academy > summary::-webkit-details-marker { display: none; }
-.create-academy > summary > span:first-child::before { content: "+"; display: inline-grid; place-items: center; width: 26px; height: 26px; margin-right: 0.55rem; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 800; }
+.create-academy > summary > span:first-child::before { content: "+"; display: inline-grid; place-items: center; width: 26px; height: 26px; margin-right: 0.55rem; border-radius: 8px; background: var(--accent); color: var(--accent-ink); font-weight: 800; }
 .create-academy[open] > summary > span:first-child::before { content: "–"; }
 .create-academy-body { margin-top: 1rem; }
 .create-academy-body > p:first-child { margin-top: 0; }

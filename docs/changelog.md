@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.11.0: Kombexa
+
+- **Nova marca: Kombexa.** "Fight Manager" saiu da interface, dos e-mails, dos metadados, do PWA, da documentação e dos dados de exemplo. Nomes técnicos (banco `fight_manager`, cookie `fm_session`) foram mantidos para não quebrar instalações existentes. Logo provisória (monograma), com pasta `public/brand/` pronta para os arquivos oficiais.
+- **Paleta e temas.** Tokens centralizados com a paleta Kombexa e cerca de 90 cores fixas trocadas por tokens. Tema **Claro / Escuro / Sistema** com preferência salva por aparelho e aplicada antes da pintura. Contraste AA: texto carvão sobre o laranja (5,6:1), laranja escurecido quando usado como texto.
+- **Identidade visual por academia.** Upload, prévia, substituição e remoção da logo (Configurações → Identidade visual), com validação real no servidor (PNG, JPEG ou WebP pelo conteúdo; SVG recusado; até 1 MB). A logo vai para o PostgreSQL, com auditoria sem o conteúdo. Novos campos: razão social e responsável.
+- **Documentos com a logo da academia:** ficha de matrícula / contrato e recibo, com o nome e as iniciais como alternativa quando não há logo. O Kombexa aparece só no rodapé, como sistema emissor.
+- **Área do Aluno ampliada:** Frequência (com graduações), Comunicados, Documentos (a própria ficha e os recibos) e Carteirinha com QR Code. O início ganhou atalhos e comunicados recentes.
+- **Comunicados** para os alunos, com nova permissão "Comunicados".
+- **Graduações** no perfil do aluno (histórico de faixas/cordas/graus).
+- **Presença pelo QR Code** do aluno (leitor ou digitação), sem duplicar e só para o dia.
+- **Segurança:** a ficha aceitava `?saude=1` com a permissão "Alunos"; agora exige "Dados de saúde". A logo vazia é recusada no banco (restrição `academy_logos_not_empty`).
+- **Migração 0011**, só aditiva; testada sobre um banco da 0.10.2 com dados.
+- **Testes:** 43 novos (312 no total), incluindo guardas da Área do Aluno, isolamento de logo, documentos, comunicados, graduações e QR. Os de isolamento foram conferidos por mutação.
+- **Seed:** senha das contas de exemplo agora é `kombexa123`; plataforma em `plataforma@kombexa.dev`.
+
 ## 0.10.2
 
 - **Teste instável corrigido.** O de recuperação de senha preenchia o formulário de login quando o servidor estava lento (as duas telas têm `#email`); agora espera a página nova.

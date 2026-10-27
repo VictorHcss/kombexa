@@ -51,7 +51,7 @@ test("cada perfil fica na própria área", async ({ page }) => {
   await expect(page).not.toHaveURL(/\/plataforma/);
 
   await page.context().clearCookies();
-  await login(page, "plataforma@fightmanager.dev");
+  await login(page, "plataforma@kombexa.dev");
   await page.goto("/mensalidades");
   await expect(page).toHaveURL(/\/plataforma/);
 

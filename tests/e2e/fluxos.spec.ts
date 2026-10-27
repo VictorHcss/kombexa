@@ -13,7 +13,7 @@ test("login: senha errada mantém o e-mail; senha certa entra", async ({ page })
   await page.click("button[type=submit]");
   await expect(page.locator(".alert--danger")).toHaveText("E-mail ou senha incorretos.");
   await expect(page.locator("#email")).toHaveValue("admin@academia.dev");
-  await page.fill("#password", "fightmanager123");
+  await page.fill("#password", "kombexa123");
   await page.click("button[type=submit]");
   await expect(page.locator(".attention-card").first()).toBeVisible();
 });

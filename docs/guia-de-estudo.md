@@ -1,6 +1,6 @@
-# Fight Manager: guia de estudo e apresentação
+# Kombexa: guia de estudo e apresentação
 
-Este guia explica o Fight Manager por inteiro: o problema que ele resolve, como o código está organizado, por que cada decisão foi tomada, o que deu errado no caminho e como apresentar o projeto. Ele foi escrito para ser lido com o código aberto ao lado.
+Este guia explica o Kombexa por inteiro: o problema que ele resolve, como o código está organizado, por que cada decisão foi tomada, o que deu errado no caminho e como apresentar o projeto. Ele foi escrito para ser lido com o código aberto ao lado.
 
 **Versão do projeto:** 0.10.0. A parte 1 (seções 1 a 18) explica a base, até a 0.6; a parte 2 (seção 19) explica o que entrou da 0.8 à 0.10, com diagrama e exercícios.
 
@@ -46,7 +46,7 @@ Este guia explica o Fight Manager por inteiro: o problema que ele resolve, como 
 
 Academias pequenas de luta costumam controlar alunos e mensalidades em caderno, planilha ou no WhatsApp. Isso causa três problemas recorrentes: não saber quem está atrasado, perder o histórico de pagamentos e gastar tempo cadastrando e cobrando cada aluno à mão.
 
-### O que o Fight Manager faz
+### O que o Kombexa faz
 
 É um sistema web de gestão administrativa para academias de luta. O fluxo principal é:
 
@@ -113,7 +113,7 @@ Um ponto que vale saber explicar: **não há biblioteca de componentes visuais**
 ## 4. Estrutura de pastas
 
 ```text
-fight-manager/
+kombexa/
 ├── app/                          telas e rotas (App Router do Next.js)
 │   ├── layout.tsx                HTML base, fonte e CSS global
 │   ├── globals.css               todo o visual do sistema
@@ -833,7 +833,7 @@ Sugestão de 7 etapas. Faça os exercícios num branch do Git e rode `npm test` 
 
 ### O discurso de um minuto
 
-> O Fight Manager é um sistema de gestão para academias de luta, que nasceu de uma situação real: academias pequenas controlam alunos e mensalidades no caderno ou no WhatsApp, e perdem dinheiro com atrasos e erros.
+> O Kombexa é um sistema de gestão para academias de luta, que nasceu de uma situação real: academias pequenas controlam alunos e mensalidades no caderno ou no WhatsApp, e perdem dinheiro com atrasos e erros.
 >
 > O sistema resolve isso com o fluxo que a recepção mais usa: pesquisar o aluno, ver se está em dia e registrar o pagamento, inclusive parcial. O atraso é calculado automaticamente, cada pagamento vira entrada no financeiro sem contagem dupla, e o aluno pode se cadastrar sozinho por um QR Code na recepção.
 >

@@ -40,7 +40,7 @@ export default async function CreateAccountPage({ searchParams }: { searchParams
         <Link href="/criar-conta?tipo=convite">Usar convite</Link>
       </div>
       <StudentSignupForm />
-      <p className="auth-switch muted">É dono de academia? O acesso é criado pela equipe do Fight Manager. Fale com o suporte da plataforma.</p>
+      <p className="auth-switch muted">É dono de academia? O acesso é criado pela equipe do Kombexa. Fale com o suporte da plataforma.</p>
     </AuthLayout>
   );
 }

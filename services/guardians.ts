@@ -31,7 +31,7 @@ export async function searchGuardians(ctx: AcademyContext, q: string) {
     ))).orderBy(asc(guardians.name)).limit(8);
 }
 
-export async function guardiansOf(ctx: AcademyContext, studentId: string) {
+export async function guardiansOf(ctx: Pick<AcademyContext, "academyId">, studentId: string) {
   return db.select({
     id: guardians.id, name: guardians.name, cpf: guardians.cpf, phone: guardians.phone, email: guardians.email,
     zip: guardians.zip, street: guardians.street, number: guardians.number, complement: guardians.complement,

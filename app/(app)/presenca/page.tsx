@@ -8,6 +8,7 @@ import { reminderText, whatsappLink } from "@/lib/whatsapp";
 import { attendanceDay, missingStudents } from "@/services/attendance";
 import { addDays } from "@/services/automation";
 import { togglePresenceAction } from "./actions";
+import { CheckInForm } from "./CheckInForm";
 
 export const metadata: Metadata = { title: "Presença" };
 const WEEKDAY = new Intl.DateTimeFormat("pt-BR", { weekday: "long", timeZone: "UTC" });
@@ -34,6 +35,8 @@ export default async function AttendancePage({ searchParams }: { searchParams: P
       <div className="presence-summary">
         <strong>{present}</strong><span>de {list.length} aluno{list.length === 1 ? "" : "s"} {sp.q ? "encontrados" : "ativos"} {day === today ? "treinaram hoje" : "treinaram neste dia"}</span>
       </div>
+
+      {day === today && <Card title="Registrar pelo QR Code"><CheckInForm /></Card>}
 
       <form className="filters filters--inline" role="search">
         <input type="hidden" name="dia" value={day} />

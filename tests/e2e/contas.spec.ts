@@ -36,7 +36,7 @@ test("aluno cria conta sem academia e a academia adiciona e aprova pelo e-mail",
 
 test("plataforma cria a academia e o responsável entra pelo link de acesso", async ({ page }) => {
   const email = `dono${Date.now()}@academia.dev`;
-  await login(page, "plataforma@fightmanager.dev");
+  await login(page, "plataforma@kombexa.dev");
   // com academias cadastradas, o formulário fica recolhido em "Nova academia"
   const create = page.locator("details.create-academy");
   if (!(await create.getAttribute("open") !== null)) await create.locator("summary").click();
@@ -60,5 +60,5 @@ test("plataforma cria a academia e o responsável entra pelo link de acesso", as
 test("criar conta de academia não é público", async ({ page }) => {
   await page.goto("/criar-conta");
   await expect(page.locator("main")).not.toContainText("Nome da academia");
-  await expect(page.locator("main")).toContainText("equipe do Fight Manager");
+  await expect(page.locator("main")).toContainText("equipe do Kombexa");
 });

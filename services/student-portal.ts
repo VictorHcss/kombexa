@@ -3,9 +3,10 @@
  * Toda consulta parte do vínculo em que students.user_id é a conta logada e o
  * status é "active". Não há como pedir dados de outro aluno pela URL.
  */
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { academies, fees, modalities, payments, students, users } from "@/db/schema";
+import { academies, attendances, fees, modalities, payments, students, users } from "@/db/schema";
+import { listRanks } from "./ranks";
 import { audit } from "./audit";
 import { ownsOrGuards } from "./guardian-access";
 import { today } from "@/lib/dates";
@@ -65,4 +66,49 @@ export async function ownAccount(ctx: StudentContext) {
   const [s] = await db.select({ phone: students.phone }).from(students)
     .where(and(eq(students.userId, ctx.userId), eq(students.status, "active"))).orderBy(desc(students.createdAt)).limit(1);
   return { ...u, phone: s?.phone ?? null };
+}
+
+/**
+ * Vínculos ativos que a conta pode ver: os próprios e os dos dependentes (responsável).
+ * É a base de todas as páginas da área do aluno: nenhuma recebe ID de aluno sem passar por aqui
+ * ou por ownsOrGuards.
+ */
+export async function activeLinks(ctx: StudentContext) {
+  const rows = await db.select({
+    id: students.id, name: students.name, academyId: students.academyId, academyName: academies.name, academyTimezone: academies.timezone, signedAt: students.enrollmentSignedAt,
+    own: sql<boolean>`${students.userId} = ${ctx.userId}`,
+  }).from(students).innerJoin(academies, eq(academies.id, students.academyId))
+    .where(and(ownsOrGuards(ctx.userId), eq(students.status, "active"), eq(academies.active, true)))
+    .orderBy(sql`${students.userId} = ${ctx.userId} desc`, asc(academies.name), asc(students.name));
+  return rows.map((r) => ({ ...r, asGuardian: !r.own }));
+}
+
+async function ownLink(ctx: StudentContext, studentId: string) {
+  const [link] = await db.select({ id: students.id, academyId: students.academyId, timezone: academies.timezone }).from(students)
+    .innerJoin(academies, eq(academies.id, students.academyId))
+    .where(and(eq(students.id, studentId), ownsOrGuards(ctx.userId), eq(students.status, "active"), eq(academies.active, true)));
+  if (!link) throw new NotFoundError("Vínculo");
+  return link;
+}
+
+/** Presenças registradas pela academia (somente leitura), do último ano, com resumo por mês. */
+export async function ownAttendance(ctx: StudentContext, studentId: string) {
+  const link = await ownLink(ctx, studentId);
+  const now = today(new Date(), link.timezone);
+  const since = `${Number(now.slice(0, 4)) - 1}${now.slice(4)}`;
+  const rows = await db.select({ date: sql<string>`${attendances.date}::text` }).from(attendances)
+    .where(and(eq(attendances.academyId, link.academyId), eq(attendances.studentId, link.id), gte(attendances.date, since)))
+    .orderBy(desc(attendances.date));
+  const dates = rows.map((r) => r.date);
+  const byMonth = new Map<string, number>();
+  for (const d of dates) byMonth.set(d.slice(0, 7), (byMonth.get(d.slice(0, 7)) ?? 0) + 1);
+  const last30Start = new Date(`${now}T12:00:00Z`); last30Start.setUTCDate(last30Start.getUTCDate() - 29);
+  const from30 = last30Start.toISOString().slice(0, 10);
+  return { dates, byMonth: [...byMonth.entries()].map(([month, count]) => ({ month, count })), last30: dates.filter((d) => d >= from30).length, today: now };
+}
+
+/** Graduações registradas pela academia (somente leitura). */
+export async function ownRanks(ctx: StudentContext, studentId: string) {
+  const link = await ownLink(ctx, studentId);
+  return listRanks({ academyId: link.academyId }, link.id);
 }

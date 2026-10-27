@@ -28,7 +28,7 @@ export async function sendEmailVerification(userId: string, baseUrl: string): Pr
   });
   await sendSafely({
     to: user.email,
-    subject: "Confirme seu e-mail no Fight Manager",
+    subject: "Confirme seu e-mail no Kombexa",
     text: [
       `Olá, ${user.name.split(" ")[0]}!`,
       "",

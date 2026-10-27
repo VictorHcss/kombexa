@@ -3,24 +3,24 @@
 /* login */
 
 .login-brand { margin-bottom: 1.2rem; }
-.login-foot { color: #9aa0ab; font-size: 0.85rem; text-align: center; margin: 0; }
+.login-foot { color: var(--muted); font-size: 0.85rem; text-align: center; margin: 0; }
 
 /* ---------------------------------------------------------------- telas de entrada */
 .auth { min-height: 100vh; display: grid; background: var(--surface); }
 @media (min-width: 960px) { .auth { grid-template-columns: minmax(380px, 44%) 1fr; } }
-.auth-side { display: none; position: relative; overflow: hidden; background: var(--brand); color: #fff; padding: 2.4rem clamp(2rem, 4vw, 3.6rem); }
+.auth-side { display: none; position: relative; overflow: hidden; background: var(--chrome); color: var(--chrome-ink); padding: 2.4rem clamp(2rem, 4vw, 3.6rem); }
 @media (min-width: 960px) { .auth-side { display: flex; flex-direction: column; } }
 .auth-side-brand { align-self: flex-start; }
 .auth-side-brand .brand-name { font-size: 1.1rem; }
 .auth-side-copy { margin-top: auto; margin-bottom: 2.2rem; max-width: 30ch; position: relative; z-index: 1; }
 .auth-side-title { margin: 0 0 1rem; font-size: clamp(2.6rem, 4.4vw, 3.8rem); line-height: 0.95; }
-.auth-side-text { margin: 0; color: #b5bac3; font-size: 1.02rem; line-height: 1.55; max-width: 38ch; }
+.auth-side-text { margin: 0; color: var(--chrome-text); font-size: 1.02rem; line-height: 1.55; max-width: 38ch; }
 .auth-ropes { display: block; width: calc(100% + 2rem); height: 180px; margin: 0 -1rem -0.6rem; }
 .rope { fill: none; stroke-width: 7; stroke-linecap: round; }
 .rope--1 { stroke: var(--accent); }
-.rope--2 { stroke: #f2f3f5; }
+.rope--2 { stroke: var(--k-light); }
 .rope--3 { stroke: var(--accent); }
-.rope-post { fill: #3a3e48; }
+.rope-post { fill: var(--chrome-2); }
 .rope-pad { fill: var(--accent); }
 @media (prefers-reduced-motion: no-preference) {
   .rope { stroke-dasharray: 620; stroke-dashoffset: 620; animation: rope-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards; }
@@ -50,9 +50,9 @@ form.inline { display: inline; }
 .test-accounts { margin-top: 1.8rem; padding: 1rem; border-radius: var(--radius-sm); border: 1px dashed var(--line-strong); background: var(--surface-2); }
 .test-accounts h2 { font-size: 0.95rem; font-weight: 750; margin: 0 0 0.2rem; }
 .test-accounts > p { margin: 0 0 0.8rem; color: var(--muted); font-size: 0.85rem; }
-.test-accounts code { font-size: 0.85em; padding: 0.05rem 0.35rem; border-radius: 5px; background: #fff; border: 1px solid var(--line); }
+.test-accounts code { font-size: 0.85em; padding: 0.05rem 0.35rem; border-radius: 5px; background: var(--surface); border: 1px solid var(--line); }
 .test-accounts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
-.test-accounts button { display: grid; width: 100%; gap: 0.05rem; padding: 0.6rem 0.8rem; text-align: left; border: 1px solid var(--line); border-radius: 9px; background: #fff; cursor: pointer; font: inherit; color: var(--ink); }
+.test-accounts button { display: grid; width: 100%; gap: 0.05rem; padding: 0.6rem 0.8rem; text-align: left; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; color: var(--ink); }
 .test-accounts button:hover { border-color: var(--accent); }
 .test-accounts button strong { font-size: 0.9rem; }
 .test-accounts button span { font-size: 0.84rem; color: var(--accent-strong); font-weight: 600; }
@@ -60,7 +60,7 @@ form.inline { display: inline; }
 
 /* criar conta: escolha de caminho (aluno) */
 .choice-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
-.choice { display: flex; gap: 1rem; align-items: center; padding: 1rem 1.1rem; border: 1px solid var(--line-strong); border-radius: var(--radius); text-decoration: none; background: #fff; }
+.choice { display: flex; gap: 1rem; align-items: center; padding: 1rem 1.1rem; border: 1px solid var(--line-strong); border-radius: var(--radius); text-decoration: none; background: var(--surface); }
 .choice:hover { border-color: var(--accent); }
 .choice-icon { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 12px; background: var(--accent-soft); color: var(--accent-strong); }
 .choice-text { display: grid; gap: 0.1rem; }

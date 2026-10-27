@@ -25,17 +25,17 @@ export interface Mailer {
   send(message: EmailMessage): Promise<void>;
 }
 
-const DEFAULT_FROM = "Fight Manager <nao-responda@fightmanager.dev>";
+const DEFAULT_FROM = "Kombexa <nao-responda@kombexa.dev>";
 const from = () => process.env.EMAIL_FROM || DEFAULT_FROM;
 
 /** HTML simples a partir do texto: escapa, deixa os links clicáveis e separa parágrafos. */
 export function textToHtml(text: string): string {
   const escape = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const paragraphs = text.split(/\n{2,}/).map((block) =>
-    `<p style="margin:0 0 16px">${escape(block).replace(/https?:\/\/[^\s<]+/g, (url) => `<a href="${url}" style="color:#c8372d">${url}</a>`).replace(/\n/g, "<br>")}</p>`);
-  return `<!doctype html><html lang="pt-BR"><body style="margin:0;padding:24px;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#15171c">`
-    + `<div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:28px;font-size:15px;line-height:1.55">`
-    + `<p style="margin:0 0 20px;font-weight:bold;font-size:17px">Fight Manager</p>${paragraphs.join("")}</div></body></html>`;
+    `<p style="margin:0 0 16px">${escape(block).replace(/https?:\/\/[^\s<]+/g, (url) => `<a href="${url}" style="color:#c53a14">${url}</a>`).replace(/\n/g, "<br>")}</p>`);
+  return `<!doctype html><html lang="pt-BR"><body style="margin:0;padding:24px;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;color:#111315">`
+    + `<div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;border-top:4px solid #ff4b1f;padding:28px;font-size:15px;line-height:1.55">`
+    + `<p style="margin:0 0 20px;font-weight:bold;font-size:17px;letter-spacing:0.06em;text-transform:uppercase;color:#111315">Kombexa</p>${paragraphs.join("")}</div></body></html>`;
 }
 
 export function devMailer(): Mailer {

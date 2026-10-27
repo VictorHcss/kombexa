@@ -1,5 +1,5 @@
 /*
- * Fight Manager: interface pensada primeiro para o celular.
+ * Kombexa: interface pensada primeiro para o celular.
  * A ordem importa: cada arquivo pode ajustar os de cima; o tema escuro vem por último.
  */
 @import "./styles/base.css";
@@ -10,4 +10,5 @@
 @import "./styles/aluno.css";
 @import "./styles/plataforma.css";
 @import "./styles/acabamento.css";
+@import "./styles/kombexa.css";
 @import "./styles/tema-escuro.css";

@@ -9,10 +9,10 @@ export default async function DocsPage() {
   await requireAcademyAdmin();
   return (
     <>
-      <PageHeader title="Documentação" description="Como usar o Fight Manager no dia a dia." />
+      <PageHeader title="Documentação" description="Como usar o Kombexa no dia a dia." />
       <Card className="docs">
         <h2 style={{ marginTop: 0 }}>Visão geral</h2>
-        <p>O Fight Manager organiza os alunos, as mensalidades, os pagamentos e o caixa da academia. O caminho mais comum é: <strong>pesquisar o aluno → abrir o perfil → ver a situação financeira → registrar o pagamento</strong>.</p>
+        <p>O Kombexa organiza os alunos, as mensalidades, os pagamentos e o caixa da academia. O caminho mais comum é: <strong>pesquisar o aluno → abrir o perfil → ver a situação financeira → registrar o pagamento</strong>.</p>
 
         <h2>Primeira utilização</h2>
         <p>Em <Link href="/configuracoes">Configurações</Link>, preencha os <strong>dados da academia</strong>, cadastre as <strong>modalidades</strong> (com o valor sugerido de cada uma) e escreva os <strong>termos da ficha de matrícula</strong>. O Início mostra o que ainda falta.</p>
@@ -29,6 +29,18 @@ export default async function DocsPage() {
         <h2>Ficha de matrícula</h2>
         <p>No perfil do aluno, em <strong>Mais ações → Imprimir ficha de matrícula</strong>. A ficha reúne os dados do cadastro, os termos da academia e as linhas de assinatura. Depois de assinada, marque <strong>Marcar como assinada</strong> no perfil: enquanto isso, o aluno aparece com “Ficha pendente”.</p>
 
+        <h2>Logo da academia nos documentos</h2>
+        <p>Em <Link href="/configuracoes?aba=identidade">Configurações → Identidade visual</Link>, envie a logo da academia (PNG, JPEG ou WebP, até 1 MB). Ela passa a encabeçar a ficha de matrícula, o contrato e os recibos. Sem logo, os documentos saem com as iniciais e o nome da academia. A razão social e o responsável, preenchidos na aba Academia, aparecem como contratada no contrato. O Kombexa aparece só no rodapé, como sistema emissor.</p>
+
+        <h2>Comunicados</h2>
+        <p>Em <Link href="/comunicados">Comunicados</Link>, publique avisos de horário, feriado, evento ou graduação. Eles aparecem para todos os alunos ativos na Área do Aluno; nada é enviado por e-mail ou WhatsApp. <strong>Fixar</strong> mantém o aviso no topo; <strong>Arquivar</strong> tira do mural sem apagar.</p>
+
+        <h2>Graduações</h2>
+        <p>No perfil do aluno, aba <strong>Graduações</strong>: registre a faixa, corda ou grau com a data. O aluno vê a graduação atual e o histórico na Área do Aluno. Remover serve para corrigir um lançamento errado e fica na auditoria.</p>
+
+        <h2>Presença pelo QR Code</h2>
+        <p>Cada aluno tem um QR Code em <strong>Carteirinha</strong>, na Área do Aluno. Em <Link href="/presenca">Presença</Link>, use um leitor de QR conectado ao computador ou digite o código mostrado abaixo do QR. Vale só para o dia de hoje e não duplica a presença. O QR não tem dados pessoais e, se o aluno gerar um novo, o antigo deixa de valer.</p>
+
         <h2>Recibo</h2>
         <p>Em <Link href="/pagamentos">Pagamentos</Link> ou no perfil do aluno, clique em <strong>Recibo</strong> ao lado de um pagamento. Dá para imprimir, salvar em PDF ou enviar o resumo pelo WhatsApp. Para alunos menores, o recibo sai em nome do responsável principal.</p>
 
@@ -44,7 +56,7 @@ export default async function DocsPage() {
           <li>Mostre na recepção, clique em <strong>Imprimir cartaz</strong> ou envie o link pelo WhatsApp.</li>
           <li>O aluno cria a própria conta. O pedido aparece em <Link href="/solicitacoes">Solicitações</Link>, com um aviso no menu.</li>
           <li>Ao aprovar, informe modalidade, data de início, valor mensal e dia de vencimento. Se a pessoa já era aluna, use <strong>Vincular a este aluno</strong> para manter o histórico dela.</li>
-          <li>Depois de aprovado, o aluno entra no Fight Manager e vê as próprias mensalidades e pagamentos.</li>
+          <li>Depois de aprovado, o aluno entra no Kombexa e vê as próprias mensalidades e pagamentos.</li>
         </ol>
         <p>O cadastro pelo convite é só para maiores de 18 anos; menores continuam sendo cadastrados por você em Alunos. Se o QR Code for parar em um lugar indevido, clique em <strong>Gerar novo código</strong>: o antigo deixa de funcionar na hora.</p>
 
@@ -93,10 +105,11 @@ export default async function DocsPage() {
 
         <h2>Limitações atuais</h2>
         <ul>
-          <li>A área do aluno é só de consulta. Não há contratos, controle de presença, notificações nem integração com bancos.</li>
-          <li>Todos os administradores da academia têm o mesmo nível de acesso.</li>
-          <li>Não há recuperação de senha por e-mail: um administrador pode criar um novo acesso em Configurações.</li>
-          <li>As listas mostram até 100 ou 200 registros; use os filtros para encontrar os demais.</li>
+          <li>A Área do Aluno é de consulta: o aluno não marca pagamentos nem presença e não altera a matrícula.</li>
+          <li>Não há integração com bancos: o Pix copia e cola é gerado com a sua chave, mas a confirmação do pagamento é feita pela recepção.</li>
+          <li>Não há assinatura eletrônica: a ficha é assinada no papel e a data é registrada no perfil do aluno.</li>
+          <li>Comunicados aparecem só na Área do Aluno (sem e-mail, WhatsApp ou notificação no celular).</li>
+          <li>Ainda não há agenda de aulas e turmas.</li>
         </ul>
       </Card>
     </>

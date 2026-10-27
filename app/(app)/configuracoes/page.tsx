@@ -6,13 +6,16 @@ import { requireAcademyAdmin } from "@/lib/auth/guards";
 import { centsToInput, formatMoney } from "@/lib/money";
 import { getAcademy, listModalities } from "@/services/academy";
 import { listAcademyUsers } from "@/services/users";
-import { toggleModalityAction, toggleUserAction } from "./actions";
-import { AcademyForm, ModalityForm, NewUserForm, PasswordForm, PermissionsForm, TermsForm } from "./Forms";
+import { removeLogoAction, toggleModalityAction, toggleUserAction } from "./actions";
+import { AcademyForm, LogoForm, ModalityForm, NewUserForm, PasswordForm, PermissionsForm, TermsForm } from "./Forms";
+import { ownAcademyLogo } from "@/services/branding";
+import { LOGO_ACCEPT, LOGO_MAX_BYTES, LOGO_RULES } from "@/lib/image";
+import { DocumentHeader } from "@/components/DocumentHeader";
 import { initials } from "@/lib/initials";
 import { can, hasFullAccess, isPermission, PERMISSIONS } from "@/lib/permissions";
 
 export const metadata: Metadata = { title: "Configurações" };
-const TABS = [["academia", "Academia"], ["modalidades", "Modalidades"], ["ficha", "Ficha de matrícula"], ["acesso", "Equipe e acesso"]] as const;
+const TABS = [["academia", "Academia"], ["identidade", "Identidade visual"], ["modalidades", "Modalidades"], ["ficha", "Ficha de matrícula"], ["acesso", "Equipe e acesso"]] as const;
 
 export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ erro?: string; aba?: string }> }) {
   const ctx = await requireAcademyAdmin();
@@ -22,7 +25,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const full = hasFullAccess(ctx.permissions);
   const tabs = TABS.filter(([key]) => key === "acesso" || settings);
   const aba = tabs.some(([key]) => key === sp.aba) ? sp.aba! : tabs[0][0];
-  const [academy, mods, team] = await Promise.all([getAcademy(ctx), listModalities(ctx), full ? listAcademyUsers(ctx) : Promise.resolve([])]);
+  const [academy, mods, team, logo] = await Promise.all([getAcademy(ctx), listModalities(ctx), full ? listAcademyUsers(ctx) : Promise.resolve([]), aba === "identidade" ? ownAcademyLogo(ctx) : Promise.resolve(null)]);
 
   return (
     <>
@@ -35,8 +38,30 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       {aba === "academia" && (
         <Card title="Dados da academia">
           <p className="small muted card-lead">Aparecem no cabeçalho da ficha de matrícula e nas mensagens de WhatsApp.</p>
-          <AcademyForm initial={{ name: academy.name, document: academy.document, phone: academy.phone, email: academy.email, timezone: academy.timezone, pixKey: academy.pixKey, autoGenerateFees: String(academy.autoGenerateFees), overdueReminder: String(academy.overdueReminder), reminderDaysBefore: academy.reminderDaysBefore === null ? "0" : String(academy.reminderDaysBefore), zip: academy.zip, street: academy.street, number: academy.number, complement: academy.complement, district: academy.district, city: academy.city, state: academy.state }} />
+          <AcademyForm initial={{ name: academy.name, legalName: academy.legalName, ownerName: academy.ownerName, document: academy.document, phone: academy.phone, email: academy.email, timezone: academy.timezone, pixKey: academy.pixKey, autoGenerateFees: String(academy.autoGenerateFees), overdueReminder: String(academy.overdueReminder), reminderDaysBefore: academy.reminderDaysBefore === null ? "0" : String(academy.reminderDaysBefore), zip: academy.zip, street: academy.street, number: academy.number, complement: academy.complement, district: academy.district, city: academy.city, state: academy.state }} />
         </Card>
+      )}
+
+      {aba === "identidade" && (
+        <>
+          <Card title="Logo da academia">
+            <p className="small muted card-lead">A logo da sua academia encabeça a ficha de matrícula, o contrato e os recibos. O sistema continua com a marca Kombexa; nos documentos ela aparece só no rodapé, como sistema emissor.</p>
+            <LogoForm current={logo && { src: logo.src, width: logo.width, height: logo.height, sizeBytes: logo.sizeBytes }} rules={LOGO_RULES} maxBytes={LOGO_MAX_BYTES} accept={LOGO_ACCEPT} />
+            {logo && (
+              <form action={removeLogoAction} className="logo-remove">
+                <ConfirmSubmit className="btn btn--small btn--ghost-danger" title="Remover a logo" confirmLabel="Remover"
+                  message="Remover a logo da academia? Os documentos passam a usar o nome da academia no cabeçalho. Você pode enviar outra logo quando quiser.">
+                  Remover logo
+                </ConfirmSubmit>
+              </form>
+            )}
+          </Card>
+          <Card title="Como fica nos documentos">
+            <p className="small muted card-lead">Prévia do cabeçalho com os dados atuais da academia.{!logo && " Sem logo, os documentos usam as iniciais e o nome da academia."}</p>
+            <div className="sheet sheet--preview"><DocumentHeader academy={academy} logo={logo?.src ?? null} /></div>
+            <p className="small muted card-note">Para mudar nome, CNPJ, contato ou endereço, use a aba <Link href="/configuracoes?aba=academia">Academia</Link>.</p>
+          </Card>
+        </>
       )}
 
       {aba === "modalidades" && (

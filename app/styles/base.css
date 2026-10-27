@@ -1,7 +1,26 @@
 /* Tokens de cor e tipografia, reset, estados (avisos, selos, toast). Os outros arquivos só usam var(--token). */
 
-/* Fight Manager: interface administrativa, pensada primeiro para o celular. */
-:root { --bg: #f3f4f6; --surface: #ffffff; --surface-2: #f8f9fa; --ink: #15171c; --muted: #5d6370; --line: #e3e6eb; --line-strong: #cdd2d9; --brand: #17191f; --brand-2: #22252d; --accent: #c8372d; --accent-strong: #a92c23; --accent-soft: #fbeceb; --accent-ink: #ffffff; --ok: #17703f; --ok-bg: #e7f5ec; --warn: #8a5300; --warn-bg: #fff3dc; --danger: #b3261e; --danger-bg: #fdecea; --info: #274b85; --info-bg: #eef3fb; --muted-bg: #eef0f3; --whatsapp-ink: #13703b; color-scheme: light; --radius: 14px; --radius-sm: 10px; --shadow: 0 1px 2px rgb(16 18 24 / 0.04), 0 1px 1px rgb(16 18 24 / 0.02); --shadow-pop: 0 18px 40px rgb(16 18 24 / 0.16); --font: "Manrope Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", var(--font); }
+/* Kombexa: interface administrativa, pensada primeiro para o celular. */
+/* Kombexa: paleta oficial. Laranja #FF4B1F (ação), carvão #111315, grafite #25282C, branco,
+   cinza-claro #F3F4F6 e cinza secundário #6B7280. Todo o resto do CSS usa só estes tokens.
+   Contraste (WCAG AA): texto carvão sobre o laranja (5,6:1); laranja como TEXTO usa --accent-strong. */
+:root {
+  color-scheme: light;
+  --k-orange: #ff4b1f; --k-charcoal: #111315; --k-graphite: #25282c; --k-white: #ffffff; --k-light: #f3f4f6; --k-gray: #6b7280;
+  --bg: var(--k-light); --surface: var(--k-white); --surface-2: #f9fafb; --ink: var(--k-charcoal); --muted: var(--k-gray);
+  --line: #e5e7eb; --line-strong: #d1d5db; --field-hover: #9ca3af;
+  --brand: var(--k-charcoal); --brand-2: var(--k-graphite);
+  --accent: var(--k-orange); --accent-hover: #e8431b; --accent-strong: #c53a14; --accent-soft: #fff1ec; --accent-ink: var(--k-charcoal);
+  --ok: #157a42; --ok-bg: #e7f6ed; --ok-ink: #ffffff; --warn: #8a5300; --warn-bg: #fff4dc; --danger: #b42318; --danger-bg: #fdecea; --danger-hover: #912018;
+  --info: #1f4f8f; --info-bg: #edf3fb; --muted-bg: #eef0f3; --whatsapp: #1f9d55; --whatsapp-ink: #13703b;
+  /* moldura escura (menu lateral e cabeçalhos): igual nos dois temas */
+  --chrome: var(--k-charcoal); --chrome-2: var(--k-graphite); --chrome-ink: #ffffff; --chrome-text: #d1d5db; --chrome-muted: #9ca3af;
+  --chrome-hover: rgb(255 255 255 / 0.07); --chrome-active: rgb(255 255 255 / 0.1); --chrome-line: rgb(255 255 255 / 0.1);
+  --overlay: rgb(17 19 21 / 0.55); --hover-tint: rgb(17 19 21 / 0.04);
+  --radius: 12px; --radius-sm: 8px;
+  --shadow: 0 1px 2px rgb(17 19 21 / 0.05), 0 1px 1px rgb(17 19 21 / 0.03); --shadow-pop: 0 18px 40px rgb(17 19 21 / 0.18);
+  --font: "Manrope Variable", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", var(--font);
+}
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body { color: var(--ink); font: 450 16px/1.5 var(--font); -webkit-font-smoothing: antialiased; font-variant-numeric: tabular-nums; background: var(--bg); }
@@ -23,8 +42,8 @@ h1, h2, h3 { margin: 0; line-height: 1.2; }
 .alert--ok { background: var(--ok-bg); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 22%, transparent); }
 .alert--danger { background: var(--danger-bg); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 22%, transparent); }
 .alert--info { background: var(--info-bg); color: var(--info); border-color: color-mix(in srgb, var(--info) 18%, transparent); }
-.toast { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 0.8rem; max-width: calc(100vw - 2rem); padding: 0.8rem 1rem; background: var(--brand); color: #fff; font-weight: 600; bottom: calc(5.2rem + env(safe-area-inset-bottom)); border-radius: 12px; box-shadow: var(--shadow-pop); animation: toast-in 0.2s ease-out; }
-.toast button { border: 0; background: none; color: #fff; font-size: 1.2rem; cursor: pointer; }
+.toast { position: fixed; z-index: 60; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 0.8rem; max-width: calc(100vw - 2rem); padding: 0.8rem 1rem; background: var(--brand); color: var(--chrome-ink); font-weight: 600; bottom: calc(5.2rem + env(safe-area-inset-bottom)); border-radius: 12px; box-shadow: var(--shadow-pop); animation: toast-in 0.2s ease-out; }
+.toast button { border: 0; background: none; color: var(--chrome-ink); font-size: 1.2rem; cursor: pointer; }
 .skeleton { height: 1rem; border-radius: 6px; background: linear-gradient(90deg, var(--muted-bg), var(--surface-2), var(--muted-bg)); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
