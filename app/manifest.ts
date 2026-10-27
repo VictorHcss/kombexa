@@ -3,15 +3,15 @@ import type { MetadataRoute } from "next";
 /** Instalar no celular ("Adicionar à tela de início"): abre como app, sem a barra do navegador. */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Fight Manager",
-    short_name: "Fight Manager",
-    description: "Gestão de academias de luta: alunos, mensalidades, pagamentos e financeiro.",
+    name: "Kombexa",
+    short_name: "Kombexa",
+    description: "Kombexa: gestão para academias de artes marciais e esportes de combate.",
     start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#17191f",
-    theme_color: "#17191f",
+    background_color: "#111315",
+    theme_color: "#111315",
     lang: "pt-BR",
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

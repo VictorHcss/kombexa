@@ -15,7 +15,7 @@ export const onRequestError: Instrumentation.onRequestError = async (error, requ
   const url = process.env.ERROR_WEBHOOK_URL;
   if (!url) return;
   try {
-    const text = `Fight Manager: erro em ${entry.method} ${entry.path} (${entry.digest ?? "sem código"}): ${entry.message.slice(0, 200)}`;
+    const text = `Kombexa: erro em ${entry.method} ${entry.path} (${entry.digest ?? "sem código"}): ${entry.message.slice(0, 200)}`;
     await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ content: text, text }), signal: AbortSignal.timeout(3000) });
   } catch {
     // o aviso nunca pode derrubar a resposta

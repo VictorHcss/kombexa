@@ -11,6 +11,7 @@ const ROOT = join(__dirname, "..", "app", "(app)");
 const BY_FOLDER: Record<string, string> = {
   alunos: "alunos", mensalidades: "mensalidades", pagamentos: "pagamentos", financeiro: "financeiro", relatorios: "financeiro",
   presenca: "presenca", solicitacoes: "solicitacoes", convidar: "solicitacoes", auditoria: "auditoria", configuracoes: "configuracoes",
+  comunicados: "comunicados",
 };
 
 /**
@@ -73,4 +74,30 @@ describe("guardas das telas, actions e rotas da academia", () => {
   it("as permissões usadas existem", () => {
     for (const p of Object.values(BY_FOLDER)) expect(ALL_PERMISSIONS).toContain(p);
   });
+});
+
+// Área do Aluno: toda tela, action e rota exige a conta de aluno (requireStudent). Os serviços
+// ainda conferem o vínculo de cada dado; isto garante que ninguém chegue lá sem sessão de aluno.
+describe("guardas da Área do Aluno", () => {
+  const STUDENT_ROOT = join(__dirname, "..", "app", "aluno");
+  const all = files(STUDENT_ROOT);
+
+  it("encontra as páginas do aluno", () => {
+    expect(all.length).toBeGreaterThanOrEqual(8);
+  });
+
+  for (const file of all) {
+    const rel = relative(STUDENT_ROOT, file).replace(/\\/g, "/");
+    it(`aluno/${rel}`, () => {
+      const source = readFileSync(file, "utf8");
+      const re = /export (?:default )?async function (\w+)/g;
+      const starts = [...source.matchAll(re)];
+      expect(starts.length).toBeGreaterThan(0);
+      starts.forEach((m, i) => {
+        const body = source.slice(m.index, starts[i + 1]?.index ?? source.length);
+        expect(/requireStudent\(\)/.test(body), `${m[1]} não chama requireStudent()`).toBe(true);
+        expect(/requireAcademyAdmin\(/.test(body), `${m[1]} não deveria usar a guarda da equipe`).toBe(false);
+      });
+    });
+  }
 });

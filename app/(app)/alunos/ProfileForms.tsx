@@ -67,3 +67,25 @@ export function EraseForm({ action }: { action: (s: ActionState, f: FormData) =>
     </form>
   );
 }
+
+/** Registrar uma graduação (faixa, corda, grau) no histórico do aluno. */
+export function RankForm({ action, modalities, defaultModality, today }: { action: (s: ActionState, f: FormData) => Promise<ActionState>; modalities: { id: string; name: string }[]; defaultModality: string | null; today: string }) {
+  const [state, formAction] = useActionState(action, {});
+  const v: Record<string, string> = { awardedAt: today, modalityId: defaultModality ?? "", ...state.values };
+  const e = state.errors ?? {};
+  return (
+    <form action={formAction} className="form" noValidate>
+      {state.message && <Alert tone="danger">{state.message}</Alert>}
+      <div className="form-grid">
+        <Field label="Graduação" name="rank" error={e.rank} hint="Como a academia chama: faixa azul, 2º grau, corda verde..."><input id="rank" name="rank" defaultValue={v.rank} maxLength={60} required /></Field>
+        <Field label="Data" name="awardedAt" error={e.awardedAt}><input id="awardedAt" name="awardedAt" type="date" max={today} defaultValue={v.awardedAt} required /></Field>
+        <Field label="Modalidade" name="modalityId" error={e.modalityId}>
+          <select id="modalityId" name="modalityId" defaultValue={v.modalityId}><option value="">Não informar</option>{modalities.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}</select>
+        </Field>
+        <Field label="Graduado por (opcional)" name="awardedBy" error={e.awardedBy}><input id="awardedBy" name="awardedBy" defaultValue={v.awardedBy} maxLength={120} /></Field>
+        <div className="span-2"><Field label="Observação (opcional)" name="notes" error={e.notes}><input id="notes" name="notes" defaultValue={v.notes} maxLength={200} /></Field></div>
+      </div>
+      <div className="form-actions"><Submit>Registrar graduação</Submit></div>
+    </form>
+  );
+}

@@ -4,7 +4,7 @@ import { useState } from "react";
 
 export function InviteTools({ link, academy }: { link: string; academy: string }) {
   const [copied, setCopied] = useState(false);
-  const message = `Faça seu cadastro na ${academy} pelo Fight Manager: ${link}`;
+  const message = `Faça seu cadastro na ${academy} pelo Kombexa: ${link}`;
   return (
     <div className="form-actions no-print">
       <button type="button" className="btn btn--primary" onClick={async () => { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2500); }}>

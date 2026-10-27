@@ -37,7 +37,7 @@ export async function requestPasswordReset(emailInput: string, baseUrl: string, 
 
   await sendSafely({
     to: user.email,
-    subject: "Redefinir sua senha no Fight Manager",
+    subject: "Redefinir sua senha no Kombexa",
     text: [
       `Olá, ${user.name.split(" ")[0]}!`,
       "",

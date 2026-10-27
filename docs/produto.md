@@ -2,12 +2,12 @@
 
 O que o sistema precisa fazer (requisitos funcionais e não funcionais) e o que vem depois.
 
-- [Requisitos do Fight Manager](#requisitos-do-fight-manager)
+- [Requisitos do Kombexa](#requisitos-do-kombexa)
 - [Roadmap](#roadmap)
 
-## Requisitos do Fight Manager
+## Requisitos do Kombexa
 
-Estado de cada requisito na versão 0.10.0. **Implementado** significa funcionando e coberto por testes automatizados; **Parcial**, que existe mas com limitação descrita; **Planejado**, que ainda não existe (ver a seção Roadmap abaixo).
+Estado de cada requisito na versão 0.11.0 (as novidades desta versão estão em [changelog.md](changelog.md)). **Implementado** significa funcionando e coberto por testes automatizados; **Parcial**, que existe mas com limitação descrita; **Planejado**, que ainda não existe (ver a seção Roadmap abaixo).
 
 ### Requisitos funcionais
 
@@ -117,10 +117,12 @@ Itens **não implementados**, em ordem sugerida. Nada aqui existe no sistema hoj
 - Status HTTP 404 correto nas páginas de registro não encontrado.
 
 ### Academia
-- Check-in pelo próprio aluno (QR Code na recepção) e turmas com horário, em cima da presença que já existe.
+- Turmas com horário e agenda na Área do Aluno, em cima da presença que já existe. (O QR Code pessoal de presença, lido pela recepção, entrou na 0.11.)
+- Leitura do QR pela câmera do aparelho da recepção (hoje: leitor USB/Bluetooth ou digitação; a política de segurança bloqueia a câmera).
+- Armazenamento de objetos (S3/R2) para as logos, como alternativa ao PostgreSQL.
 - Lembretes pelo WhatsApp (exige a API oficial do WhatsApp Business; hoje o lembrete automático é por e-mail).
 - Modelos de acesso prontos para a equipe (ex.: "Recepção", "Professor") sobre as permissões que já existem.
-- Contratos e assinatura digital.
+- Assinatura digital do contrato (o contrato com a logo da academia existe desde a 0.11; a assinatura continua no papel).
 - Planos com valores por modalidade e descontos.
 
 ### Próxima entrega (B)

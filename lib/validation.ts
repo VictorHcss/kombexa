@@ -99,6 +99,8 @@ export const guardianInput = z.object({
 /** Dados da academia (Configurações). */
 export const academyInput = z.object({
   name: requiredText("o nome da academia", 120),
+  legalName: optionalText(160),
+  ownerName: optionalText(120),
   document: z.string().trim().optional().transform((v) => (v ? v : null)).refine((v) => {
     if (v === null) return true;
     const d = v.replace(/\D/g, "");
@@ -286,3 +288,25 @@ export const ownContactInput = z.object({
   phone: z.string().trim().min(1, "Informe seu telefone.")
     .refine((v) => /^[\d\s()+-]{8,20}$/.test(v) && v.replace(/\D/g, "").length >= 10, "Telefone inválido. Inclua o DDD."),
 });
+
+export const announcementInput = z.object({
+  title: requiredText("o título", 120),
+  body: requiredText("o texto do comunicado", 4000),
+  category: z.enum(["geral", "horario", "feriado", "evento", "graduacao"], { message: "Escolha uma categoria." }),
+  pinned: z.string().optional().transform((v) => v === "on"),
+});
+
+/** Graduação (faixa, corda, grau). A data não pode estar no futuro (conferido no serviço, pelo fuso da academia). */
+export const rankInput = z.object({
+  rank: requiredText("a graduação", 60),
+  awardedAt: z.string().refine(isValidDate, "Informe uma data válida."),
+  modalityId: z.string().optional().transform((v) => (v ? v : null)),
+  awardedBy: optionalText(120),
+  notes: optionalText(200),
+});
+
+/** Código do QR Code de presença, digitado ou lido por leitor (aceita com ou sem o prefixo e os traços). */
+export function normalizeCheckinCode(raw: string): string | null {
+  const v = raw.trim().toUpperCase().replace(/^KBX1[:\s-]*/, "").replace(/[\s-]/g, "");
+  return /^[0-9A-HJKMNP-TV-Z]{12}$/.test(v) ? v : null;
+}

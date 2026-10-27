@@ -74,7 +74,7 @@ const { healthNotes: _health, ...publicColumns } = getTableColumns(students);
 export type StudentView = Omit<Student, "healthNotes"> & { modality: string | null; modalityActive: boolean | null };
 
 /** Cadastro do aluno SEM o campo de saúde (ele só é lido por getHealth). */
-export async function getStudent(ctx: AcademyContext, id: string): Promise<StudentView> {
+export async function getStudent(ctx: Pick<AcademyContext, "academyId">, id: string): Promise<StudentView> {
   const [student] = await db.select({ ...publicColumns, modality: modalities.name, modalityActive: modalities.active }).from(students)
     .leftJoin(modalities, eq(modalities.id, students.modalityId))
     .where(and(eq(students.id, id), eq(students.academyId, ctx.academyId), inArray(students.status, ["active", "inactive", "suspended"])));
@@ -83,7 +83,7 @@ export async function getStudent(ctx: AcademyContext, id: string): Promise<Stude
 }
 
 /** Dado sensível: leitura separada, só para a seção restrita do perfil. */
-export async function getHealth(ctx: AcademyContext, id: string) {
+export async function getHealth(ctx: Pick<AcademyContext, "academyId">, id: string) {
   const [row] = await db.select({ notes: students.healthNotes, consentAt: students.healthConsentAt }).from(students)
     .where(and(eq(students.id, id), eq(students.academyId, ctx.academyId)));
   if (!row) throw new NotFoundError("Aluno");

@@ -1,5 +1,4 @@
-import { formatAddress } from "./AddressFields";
-import { BrandMark } from "./Brand";
+import { DocumentFooter, DocumentHeader } from "./DocumentHeader";
 import { formatDate, formatReference } from "@/lib/dates";
 import { moneyInWords } from "@/lib/extenso";
 import { PAYMENT_METHODS } from "@/lib/labels";
@@ -20,18 +19,7 @@ export function ReceiptSheet({ r }: { r: Receipt }) {
           CANCELADO
         </div>
       )}
-      <header className="sheet-head">
-        <BrandMark size={34} />
-        <div>
-          <strong>{r.academy.name}</strong>
-          <span>
-            {[r.academy.document, r.academy.phone, r.academy.email]
-              .filter(Boolean)
-              .join(", ")}
-          </span>
-          <span>{formatAddress(r.academy)}</span>
-        </div>
-      </header>
+      <DocumentHeader academy={r.academy} logo={r.logo} />
       <div className="receipt-title">
         <h1>Recibo</h1>
         <span>Nº {r.number}</span>
@@ -68,7 +56,7 @@ export function ReceiptSheet({ r }: { r: Receipt }) {
           {r.academy.name}
         </div>
       </div>
-      <p className="receipt-note">Recibo simples, sem valor fiscal.</p>
+      <DocumentFooter note="Recibo simples, sem valor fiscal." />
     </article>
   );
 }

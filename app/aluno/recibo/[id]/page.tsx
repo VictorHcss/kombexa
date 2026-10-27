@@ -17,7 +17,7 @@ export default async function StudentReceiptPage({ params }: { params: Promise<{
   const r = await orNotFound(getOwnReceipt(ctx, id));
   return (
     <main className="content content--narrow">
-      <div className="sheet-toolbar no-print"><Link href="/aluno" className="btn btn--ghost">← Minha área</Link><PrintButton /></div>
+      <div className="sheet-toolbar no-print"><Link href="/aluno/documentos" className="btn btn--ghost">← Documentos</Link><PrintButton /></div>
       <ReceiptSheet r={r} />
     </main>
   );

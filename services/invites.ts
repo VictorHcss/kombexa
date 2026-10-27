@@ -80,7 +80,7 @@ export async function sendInviteEmail(ctx: AcademyContext, email: string, baseUr
     text: [
       "Olá!",
       "",
-      `A ${academy.name} convidou você para acompanhar suas mensalidades e pagamentos pelo Fight Manager.`,
+      `A ${academy.name} convidou você para acompanhar suas mensalidades e pagamentos pelo Kombexa.`,
       "Crie sua conta neste link (leva um minuto):",
       link,
       "",

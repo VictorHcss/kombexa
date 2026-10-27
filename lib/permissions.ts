@@ -10,7 +10,8 @@ export const PERMISSIONS = {
   presenca: { label: "Presença", hint: "Marcar quem treinou no dia e ver quem está sumido" },
   financeiro: { label: "Financeiro", hint: "Ver entradas, saídas, saldo e relatórios; lançar despesas" },
   solicitacoes: { label: "Solicitações e convites", hint: "Aprovar pedidos de entrada e gerenciar o QR Code" },
-  configuracoes: { label: "Configurações da academia", hint: "Dados da academia, Pix, modalidades e termos da ficha" },
+  comunicados: { label: "Comunicados", hint: "Publicar e arquivar avisos para os alunos" },
+  configuracoes: { label: "Configurações da academia", hint: "Dados e logo da academia, Pix, modalidades e termos da ficha" },
   auditoria: { label: "Auditoria", hint: "Ver o histórico de ações de todos" },
 } as const;
 
@@ -27,5 +28,5 @@ export const can = (p: PermissionSet, permission: Permission) => hasFullAccess(p
 /** Para onde mandar quem entra sem acesso ao Início completo: a primeira área liberada. */
 export const PERMISSION_HOME: Record<Permission, string> = {
   alunos: "/alunos", saude: "/alunos", mensalidades: "/mensalidades", pagamentos: "/pagamentos",
-  presenca: "/presenca", financeiro: "/financeiro", solicitacoes: "/solicitacoes", configuracoes: "/configuracoes", auditoria: "/auditoria",
+  presenca: "/presenca", financeiro: "/financeiro", solicitacoes: "/solicitacoes", comunicados: "/comunicados", configuracoes: "/configuracoes", auditoria: "/auditoria",
 };

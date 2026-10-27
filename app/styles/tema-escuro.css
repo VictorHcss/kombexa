@@ -1,41 +1,46 @@
-/* Tema escuro: segue o aparelho e redefine os tokens (mais poucos ajustes). */
+/* Tema escuro.
+   Preferência explícita: <html data-theme="dark"> ou "light" (escolhida pelo usuário, guardada em cookie,
+   ver components/ThemeToggle.tsx). Sem escolha, segue o aparelho (prefers-color-scheme).
+   Os dois blocos abaixo têm o mesmo conteúdo; mude os dois juntos. */
 
-/* tema escuro: segue o aparelho. Folhas de impressão (ficha e recibo) continuam claras. */
-@media (prefers-color-scheme: dark) {
-  :root {
+:root[data-theme="dark"] {
     color-scheme: dark;
-    --bg: #0f1115;
-    --surface: #171a20;
-    --surface-2: #1d2128;
-    --ink: #eceef2;
-    --muted: #9aa1ad;
-    --line: #272b33;
-    --line-strong: #353a44;
-    --brand: #0b0c10;
-    --brand-2: #262a33;
-    --accent: #e0483d;
-    --accent-strong: #c93a30;
-    --accent-soft: #3a1a18;
-    --ok: #5fd08e;
-    --ok-bg: #12291c;
-    --warn: #f0b354;
-    --warn-bg: #2d2311;
-    --danger: #ff7a70;
-    --danger-bg: #331816;
-    --info: #8db4f2;
-    --info-bg: #15213a;
-    --muted-bg: #242832;
-    --whatsapp-ink: #5fd08e;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
-    --shadow-pop: 0 18px 40px rgb(0 0 0 / 0.5);
+    --bg: #111315; --surface: #1a1d20; --surface-2: #202327; --ink: #f3f4f6; --muted: #9ca3af;
+    --line: #2b2f34; --line-strong: #3a3f45; --field-hover: #4b5158;
+    --brand: #0b0c0e; --brand-2: #25282c; --chrome: #0b0c0e; --chrome-2: #25282c;
+    --accent: #ff4b1f; --accent-hover: #ff6a42; --accent-strong: #ff6a42; --accent-soft: #3a1a10; --accent-ink: #111315;
+    --ok: #5fd08e; --ok-bg: #12291c; --ok-ink: #08130c; --warn: #f0b354; --warn-bg: #2d2311; --danger: #ff7a70; --danger-bg: #331816; --danger-hover: #ff958d;
+    --info: #8db4f2; --info-bg: #15213a; --muted-bg: #25282c; --whatsapp: #2fb36a; --whatsapp-ink: #5fd08e;
+    --overlay: rgb(0 0 0 / 0.65); --hover-tint: rgb(255 255 255 / 0.06);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.35); --shadow-pop: 0 18px 40px rgb(0 0 0 / 0.55);
+}
+:root[data-theme="dark"] .field input, :root[data-theme="dark"] .field select, :root[data-theme="dark"] .field textarea, :root[data-theme="dark"] .filters input, :root[data-theme="dark"] .filters select, :root[data-theme="dark"] .combo input[type="search"], :root[data-theme="dark"] .inline-form input { background: var(--surface-2); color: var(--ink); }
+:root[data-theme="dark"] .filters-toggle .count { background: var(--ink); color: var(--bg); }
+/* documentos (ficha, contrato, recibo) continuam papel claro no tema escuro */
+:root[data-theme="dark"] .sheet, :root[data-theme="dark"] .receipt {
+  --bg: #f3f4f6; --surface: #ffffff; --surface-2: #f9fafb; --ink: #111315; --muted: #5b6270; --line: #e5e7eb; --line-strong: #c9ccd2;
+  --ok: #157a42; --danger: #b42318; --accent: #ff4b1f; --accent-strong: #c53a14;
+  color: var(--ink); background: var(--surface); color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #111315; --surface: #1a1d20; --surface-2: #202327; --ink: #f3f4f6; --muted: #9ca3af;
+    --line: #2b2f34; --line-strong: #3a3f45; --field-hover: #4b5158;
+    --brand: #0b0c0e; --brand-2: #25282c; --chrome: #0b0c0e; --chrome-2: #25282c;
+    --accent: #ff4b1f; --accent-hover: #ff6a42; --accent-strong: #ff6a42; --accent-soft: #3a1a10; --accent-ink: #111315;
+    --ok: #5fd08e; --ok-bg: #12291c; --ok-ink: #08130c; --warn: #f0b354; --warn-bg: #2d2311; --danger: #ff7a70; --danger-bg: #331816; --danger-hover: #ff958d;
+    --info: #8db4f2; --info-bg: #15213a; --muted-bg: #25282c; --whatsapp: #2fb36a; --whatsapp-ink: #5fd08e;
+    --overlay: rgb(0 0 0 / 0.65); --hover-tint: rgb(255 255 255 / 0.06);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.35); --shadow-pop: 0 18px 40px rgb(0 0 0 / 0.55);
   }
-  .field input, .field select, .field textarea, .filters input, .filters select, .combo input[type="search"], .inline-form input { background: var(--surface-2); color: var(--ink); }
-  .btn--ghost:hover { background: #ffffff0f; }
-  .btn--danger:hover { background: #a3241c; }
-  .filters-toggle .count { background: var(--ink); color: var(--bg); }
-  .sheet, .receipt, .sheet *, .receipt * {
-    --bg: #f3f4f6; --surface: #fff; --surface-2: #f8f9fa; --ink: #15171c; --muted: #5d6370; --line: #e3e6eb; --line-strong: #cdd2d9;
-    --ok: #17703f; --danger: #b3261e; --accent: #c8372d;
+  :root:not([data-theme="light"]) .field input, :root:not([data-theme="light"]) .field select, :root:not([data-theme="light"]) .field textarea, :root:not([data-theme="light"]) .filters input, :root:not([data-theme="light"]) .filters select, :root:not([data-theme="light"]) .combo input[type="search"], :root:not([data-theme="light"]) .inline-form input { background: var(--surface-2); color: var(--ink); }
+  :root:not([data-theme="light"]) .filters-toggle .count { background: var(--ink); color: var(--bg); }
+  /* documentos (ficha, contrato, recibo) continuam papel claro no tema escuro */
+  :root:not([data-theme="light"]) .sheet, :root:not([data-theme="light"]) .receipt {
+    --bg: #f3f4f6; --surface: #ffffff; --surface-2: #f9fafb; --ink: #111315; --muted: #5b6270; --line: #e5e7eb; --line-strong: #c9ccd2;
+    --ok: #157a42; --danger: #b42318; --accent: #ff4b1f; --accent-strong: #c53a14;
+    color: var(--ink); background: var(--surface); color-scheme: light;
   }
-  .sheet, .receipt { color: var(--ink); background: var(--surface); color-scheme: light; }
 }

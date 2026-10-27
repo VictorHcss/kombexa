@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Flash } from "@/components/client";
 import { Alert, Badge, Card, Dl } from "@/components/ui";
-import { AppHeader } from "@/components/AppHeader";
+import { StudentHeader } from "@/components/StudentHeader";
 import { requireStudent } from "@/lib/auth/guards";
 import { formatDate, formatDateTime, formatReference, today } from "@/lib/dates";
 import { FEE_STATUS_LABEL } from "@/lib/fee-status";
@@ -13,8 +13,8 @@ import { whatsappLink } from "@/lib/whatsapp";
 import { membershipsOf } from "@/services/enrollment";
 import { dependentsOf } from "@/services/guardian-access";
 import { frequencyOf } from "@/services/attendance";
-import { studentOverview, type StudentContext } from "@/services/student-portal";
-import { logout } from "../login/actions";
+import { ownRanks, studentOverview, type StudentContext } from "@/services/student-portal";
+import { announcementsForStudent } from "@/services/announcements";
 import QRCode from "qrcode";
 import { CopyButton } from "@/components/CopyButton";
 import { pixPayload } from "@/lib/pix";
@@ -31,15 +31,14 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export default async function StudentArea({ searchParams }: { searchParams: Promise<{ erro?: string }> }) {
   const ctx = await requireStudent();
   const { erro } = await searchParams;
-  const [memberships, allDependents] = await Promise.all([membershipsOf(ctx.userId), dependentsOf(ctx.userId)]);
+  const [memberships, allDependents, news] = await Promise.all([membershipsOf(ctx.userId), dependentsOf(ctx.userId), announcementsForStudent(ctx, 2)]);
   // quem é aluno e também responsável vê os próprios dados e, abaixo, os dos dependentes
   const dependents = allDependents.filter((d) => !memberships.some((m) => m.id === d.id));
   const several = memberships.length > 1;
 
   return (
     <div className="student-area">
-      <AppHeader user={ctx.user.name} role="Área do aluno" home="/aluno" logout={logout}
-        links={[{ href: "/aluno", label: "Início", current: true }, { href: "/aluno/conta", label: "Minha conta" }]} />
+      <StudentHeader user={ctx.user.name} current="/aluno" />
       <main className="content content--narrow">
         <Suspense fallback={null}><Flash /></Suspense>
         <header className="student-greeting">
@@ -52,6 +51,20 @@ export default async function StudentArea({ searchParams }: { searchParams: Prom
             <span><strong>Confirme seu e-mail.</strong> Enviamos um link para {ctx.user.email}. Assim a academia sabe que a conta é mesmo sua.</span>
             <form action={resendVerificationAction}><button type="submit" className="btn btn--small">Reenviar link</button></form>
           </div>
+        )}
+
+        {(memberships.some((m) => m.status === "active") || dependents.length > 0) && (
+          <nav className="shortcuts" aria-label="Atalhos">
+            <Link href="/aluno/carteirinha"><strong>Carteirinha</strong><span>QR Code de presença</span></Link>
+            <Link href="/aluno/frequencia"><strong>Frequência</strong><span>Treinos e graduação</span></Link>
+            <Link href="/aluno/documentos"><strong>Documentos</strong><span>Ficha e recibos</span></Link>
+            <Link href="/aluno/comunicados"><strong>Comunicados</strong><span>Avisos da academia</span></Link>
+          </nav>
+        )}
+        {news.length > 0 && (
+          <Card title="Comunicados recentes" actions={<Link href="/aluno/comunicados" className="btn btn--small btn--ghost">Ver todos</Link>}>
+            <ul className="news-list">{news.map((n) => <li key={n.id}><strong>{n.title}</strong><span className="small muted">{formatDateTime(n.publishedAt)}</span><p>{n.body.length > 160 ? `${n.body.slice(0, 160)}…` : n.body}</p></li>)}</ul>
+          </Card>
         )}
 
         {memberships.length === 0 && dependents.length === 0 && (
@@ -87,7 +100,7 @@ export default async function StudentArea({ searchParams }: { searchParams: Prom
 async function Membership({ ctx, id, asGuardian = false }: { ctx: StudentContext; id: string; asGuardian?: boolean }) {
   const { me, fees, payments, situation, openCents } = await studentOverview(ctx, id);
   const first = me.name.split(" ")[0];
-  const freq = await frequencyOf(me.academyId, me.id, today(new Date(), me.academyTimezone));
+  const [freq, ranks] = await Promise.all([frequencyOf(me.academyId, me.id, today(new Date(), me.academyTimezone)), ownRanks(ctx, id)]);
   const open = fees.filter((f) => f.status === "pending").sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   const overdue = open.filter((f) => f.displayStatus === "overdue");
   const overdueCents = overdue.reduce((t, f) => t + f.balanceCents, 0);
@@ -145,7 +158,7 @@ async function Membership({ ctx, id, asGuardian = false }: { ctx: StudentContext
         <div>
           {asGuardian && <p className="dependent-tag">Dependente</p>}
           <h2 className="membership-name">{asGuardian ? me.name : me.academyName}</h2>
-          <p className="small muted">{[asGuardian ? me.academyName : null, me.modality, `aluno desde ${formatDate(me.joinedAt)}`, freq.last30 ? `${freq.last30} treino${freq.last30 === 1 ? "" : "s"} em 30 dias` : null].filter(Boolean).join(" · ")}</p>
+          <p className="small muted">{[asGuardian ? me.academyName : null, me.modality, ranks[0]?.rank, `aluno desde ${formatDate(me.joinedAt)}`, freq.last30 ? `${freq.last30} treino${freq.last30 === 1 ? "" : "s"} em 30 dias` : null].filter(Boolean).join(" · ")}</p>
         </div>
         {(wa || tel || me.academyEmail) && (
           <div className="membership-contact">

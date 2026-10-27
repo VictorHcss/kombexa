@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Brand } from "./Brand";
+import { ThemeToggle } from "./ThemeToggle";
 import { initials } from "@/lib/initials";
 
 type HeaderLink = { href: string; label: string; current?: boolean };
@@ -17,6 +18,7 @@ export function AppHeader({ user, role, home, logout, links = [] }: { user: stri
       <div className="app-header-user">
         <span className="avatar avatar--small" aria-hidden="true">{initials(user)}</span>
         <span className="app-header-name">{user}</span>
+        <ThemeToggle className="theme-toggle--on-dark" />
         <form action={logout}><button type="submit" className="btn btn--small btn--on-dark">Sair</button></form>
       </div>
     </header>

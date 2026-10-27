@@ -7,6 +7,8 @@ import { requireAcademyAdmin } from "@/lib/auth/guards";
 import { DomainError } from "@/lib/errors";
 import { academyInput, formToObject, modalityInput, passwordChangeInput, permissionsFromForm, userInput } from "@/lib/validation";
 import { createModality, setModalityActive, updateAcademy, updateModality, updateTerms } from "@/services/academy";
+import { removeAcademyLogo, saveAcademyLogo } from "@/services/branding";
+import { LOGO_MAX_BYTES } from "@/lib/image";
 import { createSession } from "@/lib/auth/session";
 import { changePassword, createAcademyAdmin, setUserActive, updateUserPermissions } from "@/services/users";
 
@@ -90,4 +92,35 @@ export async function toggleModalityAction(form: FormData) {
   const ctx = await requireAcademyAdmin("configuracoes");
   await setModalityActive(ctx, String(form.get("id")), form.get("active") === "true");
   done("modalidades", "modalidade-salva");
+}
+
+/**
+ * Logo da academia. A academia vem SEMPRE da sessão (ctx.academyId): nenhum campo do formulário
+ * escolhe qual academia muda. O conteúdo é validado no servidor (lib/image.ts).
+ */
+export async function uploadLogoAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const ctx = await requireAcademyAdmin("configuracoes");
+  const file = form.get("logo");
+  if (!(file instanceof File) || file.size === 0) return { message: "Escolha uma imagem para enviar.", errors: { logo: "Escolha uma imagem." } };
+  if (file.size > LOGO_MAX_BYTES) return { message: "A imagem passa de 1 MB. Reduza o tamanho e tente de novo.", errors: { logo: "Máximo de 1 MB." } };
+  try {
+    await saveAcademyLogo(ctx, new Uint8Array(await file.arrayBuffer()));
+  } catch (error) {
+    if (error instanceof DomainError) return { message: error.message, errors: error.fieldErrors };
+    console.error(error);
+    return { message: "Não foi possível salvar a logo agora. Tente de novo em instantes." };
+  }
+  done("identidade", "logo-salva");
+  return {};
+}
+
+export async function removeLogoAction() {
+  const ctx = await requireAcademyAdmin("configuracoes");
+  try {
+    await removeAcademyLogo(ctx);
+  } catch (error) {
+    if (error instanceof DomainError) redirect(`/configuracoes?aba=identidade&erro=${encodeURIComponent(error.message)}`);
+    throw error;
+  }
+  done("identidade", "logo-removida");
 }

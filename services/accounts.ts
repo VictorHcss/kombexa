@@ -97,11 +97,11 @@ function welcomeEmail(to: string, name: string, academy: string, link: string) {
   const first = name.split(" ")[0];
   return {
     to,
-    subject: `Acesso da ${academy} no Fight Manager`,
+    subject: `Acesso da ${academy} no Kombexa`,
     text: [
       `Olá, ${first}!`,
       "",
-      `A conta da ${academy} no Fight Manager está pronta. Para entrar pela primeira vez, crie a sua senha neste link:`,
+      `A conta da ${academy} no Kombexa está pronta. Para entrar pela primeira vez, crie a sua senha neste link:`,
       link,
       "",
       `O link vale por ${ACCESS_LINK_HOURS / 24} dias e só pode ser usado uma vez. Depois, entre com este e-mail (${to}) e a senha que você criou.`,

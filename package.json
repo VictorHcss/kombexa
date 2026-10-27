@@ -1,6 +1,6 @@
 {
-  "name": "fight-manager",
-  "version": "0.10.2",
+  "name": "kombexa",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "scripts": {

@@ -6,7 +6,7 @@ import { MoneyInput, PasswordInput, Submit } from "@/components/client";
 import { BRAZIL_TIMEZONES } from "@/lib/dates";
 import { ALL_PERMISSIONS, PERMISSIONS, type Permission } from "@/lib/permissions";
 import { Alert, Field } from "@/components/ui";
-import { changePasswordAction, createUserAction, updatePermissionsAction, saveModalityAction, updateAcademyAction, updateTermsAction } from "./actions";
+import { changePasswordAction, createUserAction, updatePermissionsAction, saveModalityAction, updateAcademyAction, updateTermsAction, uploadLogoAction } from "./actions";
 
 export function PasswordForm() {
   const [state, action] = useActionState(changePasswordAction, {});
@@ -99,6 +99,8 @@ export function AcademyForm({ initial }: { initial: Record<string, string | null
       {state.message && <Alert tone="danger">{state.message}</Alert>}
       <div className="form-grid">
         <Field label="Nome da academia" name="name" error={e.name}><input id="name" name="name" defaultValue={v.name ?? ""} required /></Field>
+        <Field label="Razão social (opcional)" name="legalName" error={e.legalName} hint="Usada como contratada no contrato de matrícula."><input id="legalName" name="legalName" defaultValue={v.legalName ?? ""} maxLength={160} /></Field>
+        <Field label="Responsável pela academia (opcional)" name="ownerName" error={e.ownerName} hint="Quem assina pela academia nos contratos."><input id="ownerName" name="ownerName" defaultValue={v.ownerName ?? ""} maxLength={120} autoComplete="name" /></Field>
         <Field label="CPF ou CNPJ (opcional)" name="document" error={e.document} hint="Sai na ficha de matrícula, como identificação da academia."><input id="document" name="document" defaultValue={v.document ?? ""} inputMode="numeric" /></Field>
         <Field label="Telefone ou WhatsApp" name="phone" error={e.phone}><input id="phone" name="phone" defaultValue={v.phone ?? ""} inputMode="tel" /></Field>
         <Field label="E-mail" name="email" error={e.email}><input id="email" name="email" type="email" defaultValue={v.email ?? ""} /></Field>
@@ -157,6 +159,48 @@ export function ModalityForm({ id, initial }: { id: string | null; initial?: { n
       <Field label="Mensalidade sugerida (opcional)" name={`fee-${id ?? "nova"}`} error={e.defaultFee}><MoneyInput id={`fee-${id ?? "nova"}`} name="defaultFee" defaultValue={v.defaultFee ?? ""} invalid={!!e.defaultFee} /></Field>
       <Submit className="btn btn--primary">{id ? "Salvar" : "Adicionar"}</Submit>
       {state.message && !e.name && <p className="field-error" style={{ gridColumn: "1 / -1" }}>{state.message}</p>}
+    </form>
+  );
+}
+
+/**
+ * Logo da academia: escolher, ver a prévia antes de salvar, substituir e remover.
+ * A conferência aqui é só para avisar cedo; quem decide é o servidor (lib/image.ts).
+ */
+export function LogoForm({ current, rules, maxBytes, accept }: { current: { src: string; width: number; height: number; sizeBytes: number } | null; rules: string; maxBytes: number; accept: string }) {
+  const [state, action] = useActionState(uploadLogoAction, {});
+  const [preview, setPreview] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const error = localError ?? state.errors?.logo ?? state.message;
+
+  function pick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    setLocalError(null);
+    if (preview) URL.revokeObjectURL(preview);
+    setPreview(null);
+    if (!file) return;
+    if (!accept.split(",").includes(file.type)) { setLocalError("Use PNG, JPEG ou WebP."); e.target.value = ""; return; }
+    if (file.size > maxBytes) { setLocalError("A imagem passa de 1 MB."); e.target.value = ""; return; }
+    setPreview(URL.createObjectURL(file));
+  }
+
+  const shown = preview ?? current?.src ?? null;
+  return (
+    <form action={action} className="form logo-form">
+      <div className="logo-preview" data-empty={!shown}>
+        {shown ? (
+          // eslint-disable-next-line @next/next/no-img-element -- prévia local (blob:) ou logo salva (data:)
+          <img src={shown} alt={preview ? "Prévia da nova logo" : "Logo atual da academia"} />
+        ) : <span>Sem logo</span>}
+        {preview && <span className="logo-preview-tag">Prévia, ainda não salva</span>}
+      </div>
+      <div className="logo-side">
+        <Field label={current ? "Substituir a logo" : "Escolher a logo"} name="logo" error={error ?? undefined} hint={rules}>
+          <input id="logo" name="logo" type="file" accept={accept} onChange={pick} required aria-describedby="logo-hint" />
+        </Field>
+        {current && !preview && <p className="small muted">Atual: {current.width}×{current.height} px, {Math.max(1, Math.round(current.sizeBytes / 1024))} KB.</p>}
+        <div className="form-actions"><Submit pending="Enviando…">{current ? "Salvar nova logo" : "Salvar logo"}</Submit></div>
+      </div>
     </form>
   );
 }

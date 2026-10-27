@@ -83,6 +83,9 @@ PostgreSQL 16 com Drizzle ORM. O schema fica em `db/schema.ts` e as migrations e
 | `payments` | Pagamentos, opcionalmente ligados a uma mensalidade | `academy_id`, `student_id`, `fee_id` → fees, `created_by` → users |
 | `financial_entries` | Entradas e saídas do financeiro | `academy_id`, `payment_id` → payments (único) |
 | `audit_logs` | Registro das ações importantes | `academy_id`, `user_id` → users |
+| `academy_logos` | Logo de cada academia (bytes, tipo, dimensões, hash), validada pelo conteúdo | `academy_id` (chave primária) → academies |
+| `announcements` | Comunicados para os alunos (categoria, fixado, arquivado) | `academy_id` → academies |
+| `student_ranks` | Histórico de graduações (faixa/corda/grau, data, quem graduou) | `academy_id`, `student_id`, `modality_id` |
 
 Todas as chaves primárias são UUID. Tabelas editáveis têm `created_at` e `updated_at`.
 
@@ -345,3 +348,13 @@ O endereço do convite é `/convite/{token}`. O token tem 24 caracteres aleatór
 | `GET /aluno/meus-dados` | Route Handler | STUDENT | — | JSON (download) com a conta e todos os vínculos da pessoa |
 | `anonymizeAction(id)` | Server Action, `app/(app)/alunos/actions.ts` | ACADEMY_ADMIN | `confirmation` = ELIMINAR | perfil com `?ok=dados-eliminados`; erros: aluno ativo, mensalidade em aberto, pagamento aguardando confirmação |
 | `/pagamentos/{id}/recibo`, `/aluno/recibo/{id}` | Páginas | ACADEMY_ADMIN, STUDENT (só os próprios) | — | recibo para imprimir; 404 para pagamento aguardando confirmação ou de outra academia |
+
+## Identidade visual e Área do Aluno (0.11)
+
+- **Duas marcas, dois papéis.** Kombexa é o produto (`components/Brand.tsx`, metadados, rodapé dos documentos). A logo da academia (`services/branding.ts`) encabeça os documentos dela (`components/DocumentHeader.tsx`). Toda escrita de logo usa `ctx.academyId` da sessão; nenhum campo de formulário escolhe a academia.
+- **Imagens validadas pelo conteúdo** (`lib/image.ts`): assinatura binária e dimensões de PNG, JPEG e WebP lidas do arquivo; SVG recusado. As logos ficam no PostgreSQL (interface `LogoStore`, trocável) e vão para o documento como `data:` URL, sem rota pública.
+- **Documentos** (`services/documents.ts`): dois pontos de entrada com checagem própria (`enrollmentDocument` para a equipe, `ownEnrollmentDocument` para o aluno, via `ownsOrGuards`) e um carregador que sempre filtra pelo par academia + aluno. Saúde só entra com a permissão `saude`, e nunca na versão do aluno.
+- **Área do Aluno:** toda consulta parte de `activeLinks` ou de `ownsOrGuards` (`services/student-portal.ts`). O aluno não tem nenhum serviço de escrita sobre mensalidades, pagamentos ou presença.
+- **QR Code de presença** (`services/checkin.ts`): o QR leva só `KBX1:` + 12 caracteres aleatórios. A equipe registra com `checkInByCode`, que confere a academia da sessão e reaproveita `attendances` (uma por dia, sem duplicar). Gerar um novo código invalida o anterior.
+- **Tema:** tokens em `app/styles/base.css`; tema escuro em `tema-escuro.css` por `data-theme` ou pelo sistema; preferência em cookie, aplicada antes da pintura (`lib/theme.ts`).
+- **Testes de guarda:** `tests/guardas.test.ts` exige `requireAcademyAdmin(permissão)` na área da equipe e `requireStudent()` em toda a Área do Aluno.

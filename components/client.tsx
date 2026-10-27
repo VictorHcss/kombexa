@@ -101,6 +101,17 @@ const FLASH: Record<string, string> = {
   "academia-suspensa": "Academia suspensa. Os acessos dela foram encerrados.",
   "academia-reativada": "Academia reativada.",
   "contato-salvo": "Telefone atualizado nas suas academias.",
+  "logo-salva": "Logo da academia salva. Ela já aparece nos documentos.",
+  "logo-removida": "Logo removida. Os documentos voltam a usar o nome da academia.",
+  "comunicado-publicado": "Comunicado publicado para os alunos.",
+  "comunicado-salvo": "Comunicado atualizado.",
+  "comunicado-arquivado": "Comunicado arquivado. Ele saiu do mural dos alunos.",
+  "comunicado-reativado": "Comunicado de volta ao mural.",
+  "graduacao-registrada": "Graduação registrada.",
+  "graduacao-removida": "Registro de graduação removido.",
+  "codigo-gerado": "Novo QR Code gerado. O anterior deixou de valer.",
+  "presenca-registrada": "Presença registrada.",
+  "tema-salvo": "Tema atualizado.",
 };
 
 /** Mensagem de sucesso após uma ação (vem no parâmetro ?ok= da URL e some sozinha). */

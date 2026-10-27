@@ -45,7 +45,7 @@ export async function grantGuardianAccess(ctx: AcademyContext, guardianId: strin
     text: [
       `Olá, ${g.name.split(" ")[0]}!`,
       "",
-      `A ${academy?.name ?? "academia"} liberou para você a área do responsável no Fight Manager: situação, mensalidades, Pix e recibos dos seus dependentes.`,
+      `A ${academy?.name ?? "academia"} liberou para você a área do responsável no Kombexa: situação, mensalidades, Pix e recibos dos seus dependentes.`,
       "",
       created ? `Para criar a sua senha, abra o link abaixo (vale por ${ACCESS_LINK_HOURS / 24} dias e só funciona uma vez):` : "Entre com o seu e-mail e a senha que você já usa:",
       link,

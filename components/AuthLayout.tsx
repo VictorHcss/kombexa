@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { Brand } from "./Brand";
+import { ThemeToggle } from "./ThemeToggle";
 
 /**
  * Moldura das telas públicas (entrar, criar conta, esqueci a senha, nova senha, convite).
@@ -15,8 +16,8 @@ export function AuthLayout({ title, lead, children, footer, wide = false }: {
       <aside className="auth-side" aria-hidden="true">
         <Link href="/login" className="brand-link auth-side-brand" tabIndex={-1}><Brand /></Link>
         <div className="auth-side-copy">
-          <p className="auth-side-title">Seus alunos em dia, sem planilha.</p>
-          <p className="auth-side-text">Cadastro, mensalidades, pagamentos e caixa da academia no mesmo lugar, do computador da recepção ao celular do professor.</p>
+          <p className="auth-side-title">Sua academia no controle, do tatame ao caixa.</p>
+          <p className="auth-side-text">Alunos, mensalidades, presença, graduações e documentos no mesmo lugar, e uma Área do Aluno para cada atleta acompanhar a própria jornada.</p>
         </div>
         <Ropes />
       </aside>
@@ -28,6 +29,7 @@ export function AuthLayout({ title, lead, children, footer, wide = false }: {
           {children}
           {footer && <div className="auth-footer">{footer}</div>}
         </div>
+        <ThemeToggle className="auth-theme" />
       </main>
     </div>
   );
