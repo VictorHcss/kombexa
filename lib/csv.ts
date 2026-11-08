@@ -4,8 +4,18 @@
  */
 type Cell = string | number | null | undefined;
 
+/** Número no formato do csvMoney ("1234,56", "-5,00"): fica como está para o Excel somar. */
+const NUMERIC = /^[-+]?\d+(,\d+)?$/;
+
+/**
+ * Injeção de fórmula (OWASP "CSV Injection"): texto que começa com = + - @ (ou tabulação/retorno)
+ * vira fórmula no Excel. Nomes e observações podem vir do cadastro público pelo convite, então
+ * esses textos ganham um apóstrofo na frente e aparecem como texto. Números não são alterados.
+ */
+const neutralize = (text: string) => (/^[=+\-@\t\r]/.test(text) && !NUMERIC.test(text) ? `'${text}` : text);
+
 const escape = (value: Cell) => {
-  const text = value === null || value === undefined ? "" : String(value);
+  const text = value === null || value === undefined ? "" : typeof value === "number" ? String(value) : neutralize(String(value));
   return /[";\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 };
 

@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { handleForm, type ActionState } from "@/lib/action";
 import { requireAcademyAdmin } from "@/lib/auth/guards";
+import { can, type Permission } from "@/lib/permissions";
 import { guardianInput, rankInput, studentInput } from "@/lib/validation";
 import { addRank, removeRank } from "@/services/ranks";
 import { DomainError } from "@/lib/errors";
@@ -42,9 +43,15 @@ export async function toggleStudentStatusAction(form: FormData) {
   redirect(`/alunos/${id}?ok=aluno-status`);
 }
 
+/** Permissões que usam a busca de alunos (cadastro, mensalidade e pagamento). */
+const SEARCH_PERMISSIONS: Permission[] = ["alunos", "mensalidades", "pagamentos"];
+
 /** Busca usada pelo campo de aluno (pagamento, mensalidade). Só dados da própria academia. */
 export async function searchStudentsAction(q: string) {
   const ctx = await requireAcademyAdmin();
+  // só para quem usa esses formulários: sem isso, alguém liberado só para "Comunicados" ou
+  // "Presença" chamaria a action direto e veria telefone, e-mail e atraso dos alunos
+  if (!SEARCH_PERMISSIONS.some((p) => can(ctx.permissions, p))) return [];
   if (typeof q !== "string" || q.trim().length < 2) return [];
   const rows = await listStudents(ctx, { q: q.slice(0, 80) }, 8);
   return rows.map((s) => ({ id: s.id, name: s.name, modality: s.modality, phone: s.phone, email: s.email, status: s.status, overdue: s.overdue, monthlyFeeCents: s.monthlyFeeCents }));

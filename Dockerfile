@@ -21,6 +21,8 @@ RUN addgroup -S app && adduser -S app -G app
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/package.json /app/next.config.ts /app/tsconfig.json ./
+# ícones do app (manifest/PWA) e arquivos da marca: sem esta linha respondem 404 na imagem
+COPY --from=build /app/public ./public
 COPY --from=build /app/drizzle ./drizzle
 COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/db ./db

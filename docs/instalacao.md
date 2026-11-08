@@ -1,402 +1,266 @@
-# Instalação e operação
+# Instalação do Kombexa
 
-Do zero até o sistema rodando, e como mantê-lo no ar: instalação, desenvolvimento, publicação, e-mail, backup, tarefa diária e problemas comuns.
+Este manual cobre dois caminhos:
 
-- [Instalação e configuração](#instalação-e-configuração)
-- [Desenvolvimento](#desenvolvimento)
-- [Publicação em produção](#publicação-em-produção)
-- [Configurar o envio de e-mails](#configurar-o-envio-de-e-mails)
-- [Backup, restauração e monitoramento](#backup-restauração-e-monitoramento)
-- [Problemas comuns](#problemas-comuns)
+- **Caminho A, sem Docker**: Node.js e PostgreSQL instalados na máquina. Foi o caminho **executado e verificado** na auditoria (Ubuntu 24.04, Node 22.22, PostgreSQL 16.15).
+- **Caminho B, com Docker Compose**: sobe banco, aplicação, agendador e backup. **Não pôde ser executado na auditoria** (Docker indisponível no ambiente). Os comandos vêm dos arquivos reais (`Dockerfile`, `docker-compose.yml`), e o conteúdo da imagem foi simulado; ainda assim, trate-o como **precisa de validação** na primeira vez.
 
-## Instalação e configuração
+Os comandos estão em **Linux/macOS (bash)** e, quando a sintaxe muda, em **Windows PowerShell**.
 
-### Variáveis de ambiente
+---
 
-Copie `.env.example` para `.env`:
+## 1. Instalar as ferramentas
 
-| Variável | Uso |
+| Ferramenta | Versão recomendada | Por quê |
+| --- | --- | --- |
+| Node.js | **22 LTS** | É a versão do `Dockerfile` (`node:22-alpine`) e do CI. O código usa `process.loadEnvFile`, que só existe a partir do Node 20.12/21.7. |
+| npm | 10 (vem com o Node 22) | O projeto tem `package-lock.json` (npm). |
+| PostgreSQL | **16** | É a versão do `docker-compose.yml` e do CI. |
+| Git | qualquer recente | Para clonar. |
+| Docker Desktop | opcional | Só para o caminho B. |
+
+**Windows (PowerShell, com winget):**
+
+```powershell
+winget install OpenJS.NodeJS.LTS
+winget install PostgreSQL.PostgreSQL.16
+winget install Git.Git
+# feche e abra o PowerShell, depois confira:
+node -v   # deve mostrar v22.x
+npm -v
+psql --version
+```
+
+> Se o `psql` não for encontrado no Windows, adicione `C:\Program Files\PostgreSQL\16\bin` ao PATH. Durante a instalação do PostgreSQL, anote a senha do usuário `postgres`.
+
+**Ubuntu/Debian:**
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs postgresql git
+```
+
+**macOS (Homebrew):**
+
+```bash
+brew install node@22 postgresql@16 git
+brew services start postgresql@16
+```
+
+## 2. Clonar o repositório
+
+```bash
+git clone https://github.com/VictorHcss/kombexa.git
+cd kombexa
+```
+
+Se você recebeu o pacote `KOMBEXA_COMPLETO.zip`, o código já está em `KOMBEXA/projeto/`: extraia e entre nessa pasta.
+
+## 3. Instalar as dependências
+
+```bash
+npm ci
+```
+
+`npm ci` instala exatamente as versões do `package-lock.json` (mais previsível que `npm install`). Na auditoria levou cerca de 15 s e instalou 431 pacotes. Os avisos `deprecated` sobre `@esbuild-kit` e `eslint@9` são esperados e não impedem nada (ver [MANUTENCAO.md](MANUTENCAO.md)).
+
+## 4. Configurar o arquivo de ambiente
+
+```bash
+cp .env.example .env
+```
+
+```powershell
+Copy-Item .env.example .env
+```
+
+O `.env.example` já funciona para desenvolvimento local, **se** o PostgreSQL tiver o usuário `fight` com senha `fight` (passo 5). As variáveis mais importantes:
+
+| Variável | Obrigatória | Para quê |
+| --- | --- | --- |
+| `DATABASE_URL` | sim | Banco da aplicação |
+| `TEST_DATABASE_URL` | para `npm test` | Banco dos testes. **É apagado e recriado a cada execução.** Nunca aponte para dados reais. |
+| `E2E_DATABASE_URL` | para `npm run test:e2e` | Banco dos testes de navegador. Também é apagado. |
+| `APP_TIMEZONE` | não | Fuso padrão (`America/Sao_Paulo`) |
+| `APP_URL` | **sim em produção** | Endereço público usado nos links dos e-mails. Desde a auditoria, também protege contra links falsificados (ver [SEGURANCA.md](SEGURANCA.md)). |
+| `CRON_SECRET` | para a tarefa diária | Segredo da rota `/api/tarefas/diarias` (mínimo 16 caracteres; troque em produção) |
+| `EMAIL_PROVIDER`, `EMAIL_FROM`, `SMTP_*`, `RESEND_API_KEY` | não | Envio de e-mails. Sem eles, os e-mails aparecem só no console do servidor. |
+| `COOKIE_SECURE` | não | `false` apenas para testar build de produção sem HTTPS na sua máquina |
+| `SHOW_TEST_ACCOUNTS` | não | Mostra as contas de teste na tela de login |
+
+> O `.env` está no `.gitignore`. Nunca o envie para o GitHub.
+
+## 5. Inicializar o banco de dados
+
+Crie o usuário e os três bancos. Os nomes vêm do `.env.example`.
+
+**Linux/macOS:**
+
+```bash
+sudo -u postgres psql -c "CREATE USER fight WITH PASSWORD 'fight' CREATEDB;"
+sudo -u postgres psql -c "CREATE DATABASE fight_manager OWNER fight;"
+sudo -u postgres psql -c "CREATE DATABASE fight_manager_test OWNER fight;"
+sudo -u postgres psql -c "CREATE DATABASE fight_manager_e2e OWNER fight;"
+```
+
+(No macOS com Homebrew, troque `sudo -u postgres psql` por `psql postgres`.)
+
+**Windows PowerShell** (vai pedir a senha do usuário `postgres` definida na instalação):
+
+```powershell
+psql -U postgres -c "CREATE USER fight WITH PASSWORD 'fight' CREATEDB;"
+psql -U postgres -c "CREATE DATABASE fight_manager OWNER fight;"
+psql -U postgres -c "CREATE DATABASE fight_manager_test OWNER fight;"
+psql -U postgres -c "CREATE DATABASE fight_manager_e2e OWNER fight;"
+```
+
+> Os testes apagam e recriam o schema `public` dos bancos de teste. Se o usuário `fight` não for dono deles, os testes falham por permissão.
+
+## 6. Executar as migrações
+
+```bash
+npm run db:migrate
+```
+
+Saída esperada: `Migrations aplicadas.` São 12 migrations (`drizzle/0000_init.sql` a `0011_identidade_comunicados_graduacao.sql`), que criam 19 tabelas. O comando é seguro para repetir: só aplica as pendentes.
+
+## 7. Inserir dados de demonstração (opcional)
+
+```bash
+npm run db:seed
+```
+
+Cria a "Academia Punho de Ferro (exemplo)" com 10 alunos fictícios, mensalidades, pagamentos, despesas e 7 contas de teste. **Todas usam a senha `kombexa123`**:
+
+| E-mail | Perfil |
 | --- | --- |
-| `DATABASE_URL` | Conexão com o PostgreSQL da aplicação |
-| `TEST_DATABASE_URL` | Banco usado pelos testes (é apagado e recriado a cada execução; nunca aponte para o banco real) |
-| `POSTGRES_PASSWORD` | Senha do PostgreSQL no `docker-compose.yml` |
-| `APP_TIMEZONE` | Fuso usado para "hoje" e atrasos (padrão `America/Sao_Paulo`) |
-| `COOKIE_SECURE` | `false` apenas para testar o build de produção sem HTTPS em rede local |
+| `admin@academia.dev` | Administrador da academia (acesso total) |
+| `recepcao@academia.dev` | Equipe com acesso limitado |
+| `aluno@academia.dev` | Aluno aprovado |
+| `responsavel@academia.dev` | Responsável por dois menores |
+| `pendente@academia.dev` | Aluno aguardando aprovação |
+| `semacademia@academia.dev` | Aluno sem academia |
+| `plataforma@kombexa.dev` | Administrador da plataforma |
 
-O `.env` está no `.gitignore` e no `.dockerignore`. Nenhuma senha ou token fica no código.
+O seed **não apaga nada**: se os dados já existem, só completa as contas que faltam. Ele se recusa a rodar com `NODE_ENV=production`, a menos que exista `ALLOW_SEED=1` (comportamento confirmado na auditoria). **Nunca rode o seed num banco real**: as senhas são públicas.
 
-### Com Docker
+## 8. Criar o primeiro administrador (uso real, sem seed)
+
+A senha vai numa variável de ambiente (`ADMIN_PASSWORD`, no mínimo 10 caracteres), para não ficar no histórico do terminal.
+
+**Administrador da plataforma** (é quem cria as academias em `/plataforma`):
+
+```bash
+ADMIN_PASSWORD="uma-senha-forte-aqui" npm run db:create-platform-admin -- "Seu Nome" voce@email.com
+```
+
+```powershell
+$env:ADMIN_PASSWORD = "uma-senha-forte-aqui"
+npm run db:create-platform-admin -- "Seu Nome" voce@email.com
+Remove-Item Env:ADMIN_PASSWORD
+```
+
+**Ou, direto, uma academia com o seu administrador:**
+
+```bash
+ADMIN_PASSWORD="uma-senha-forte-aqui" npm run db:create-admin -- "Nome da Academia" "Seu Nome" voce@email.com
+```
+
+```powershell
+$env:ADMIN_PASSWORD = "uma-senha-forte-aqui"
+npm run db:create-admin -- "Nome da Academia" "Seu Nome" voce@email.com
+Remove-Item Env:ADMIN_PASSWORD
+```
+
+Ambos foram executados na auditoria. Sem a senha, o script mostra o modo de uso e sai com erro, sem criar nada.
+
+## 9. Iniciar o sistema
+
+**Desenvolvimento** (recarrega ao salvar arquivos):
+
+```bash
+npm run dev
+```
+
+**Produção local** (o que roda num servidor):
+
+```bash
+npm run build
+npm start
+```
+
+> No modo produção o cookie de sessão só funciona por HTTPS. Para testar `npm start` em `http://localhost`, defina `COOKIE_SECURE=false` (no `.env` ou no comando: `COOKIE_SECURE=false npm start`; no PowerShell, `$env:COOKIE_SECURE="false"; npm start`). **Nunca faça isso num servidor público.**
+
+## 10. Acessar a aplicação
+
+- Aplicação: <http://localhost:3000>
+- Verificação de saúde: <http://localhost:3000/api/saude>, que deve responder `{"ok":true,...}`
+
+Entre com uma das contas do passo 7 ou com o administrador criado no passo 8.
+
+## 11. Encerrar os serviços
+
+- `npm run dev` ou `npm start`: **Ctrl + C** no terminal.
+- PostgreSQL no Linux: `sudo systemctl stop postgresql`; no macOS: `brew services stop postgresql@16`; no Windows: serviço `postgresql-x64-16` em `services.msc`.
+
+---
+
+## Caminho B: Docker Compose (precisa de validação)
+
+O `docker-compose.yml` define quatro serviços:
+
+| Serviço | O que faz |
+| --- | --- |
+| `db` | PostgreSQL 16, dados no volume `pgdata`, porta 5432 publicada |
+| `app` | A aplicação. Ao iniciar, aplica as migrations e sobe o `next start` na porta 3000 |
+| `scheduler` | Chama `POST /api/tarefas/diarias` de hora em hora com o `CRON_SECRET` |
+| `backup` | Roda `scripts/backup.sh` uma vez por dia, gravando em `./backups` |
 
 ```bash
 cp .env.example .env
 docker compose up -d --build
-docker compose exec app npm run db:seed    # opcional
+docker compose ps
 ```
 
-- Aplicação: http://localhost:3000
-- PostgreSQL: localhost:5432 (usuário `fight`, banco `fight_manager`)
-- As migrations rodam automaticamente sempre que o container da aplicação inicia.
+**Dados de exemplo no Docker.** O container roda com `NODE_ENV=production`, então o seed precisa da liberação explícita:
+
+```bash
+docker compose exec -e ALLOW_SEED=1 app npm run db:seed
+```
+
+> A documentação original (`docs/instalacao.md`) indica `docker compose exec app npm run db:seed`, **sem** `ALLOW_SEED=1`. Com isso o script apenas imprime "Seed bloqueado em produção". Comportamento reproduzido na auditoria.
+
+**Primeiro administrador no Docker:**
+
+```bash
+docker compose exec -e ADMIN_PASSWORD="uma-senha-forte" app npm run db:create-platform-admin -- "Seu Nome" voce@email.com
+```
 
 | Ação | Comando |
 | --- | --- |
-| Subir | `docker compose up -d --build` |
-| Parar | `docker compose down` |
-| Logs | `docker compose logs -f app` (ou `db`) |
-| Migrations | `docker compose exec app npm run db:migrate` |
-| Seed | `docker compose exec app npm run db:seed` |
-| Reset do banco (apaga tudo) | `docker compose down -v && docker compose up -d --build` |
-
-### Sem Docker
-
-1. Instale Node.js 20+ e PostgreSQL 14+.
-2. Crie os bancos: `createdb fight_manager` e `createdb fight_manager_test`.
-3. `npm install`, `cp .env.example .env` e ajuste as URLs.
-4. `npm run db:migrate` e, se quiser, `npm run db:seed`.
-5. `npm run dev` para desenvolvimento, ou `npm run build && npm start` para produção.
-
-Reset sem Docker: `dropdb fight_manager && createdb fight_manager && npm run db:migrate`.
-
-### Contas
-
-- Com o seed, todas com a senha `kombexa123`: `plataforma@kombexa.dev` (plataforma), `admin@academia.dev` (academia), `aluno@academia.dev` (aluno aprovado), `pendente@academia.dev` (aluno aguardando aprovação) e `semacademia@academia.dev` (aluno sem academia). A tela de login mostra essas contas em desenvolvimento ou com `SHOW_TEST_ACCOUNTS=true`.
-- Os scripts (`db:migrate`, `db:seed`, `db:create-admin`, `email:test`) leem o `.env` da raiz sozinhos; variáveis já definidas no ambiente têm prioridade.
-- E-mail: veja a seção "Configurar o envio de e-mails" mais abaixo.
-- Uso real: crie o administrador da plataforma com `ADMIN_PASSWORD="..." npm run db:create-platform-admin -- "Seu Nome" voce@email.com` e, pela tela `/plataforma`, as academias. O script `ADMIN_PASSWORD="..." npm run db:create-admin -- "Academia" "Nome" email@dominio.com` continua disponível para criar uma academia direto pelo terminal.
-
-## Desenvolvimento
-
-### Rotina
-
-```bash
-npm run dev         # servidor de desenvolvimento
-npm test            # testes (PostgreSQL real, banco de TEST_DATABASE_URL)
-npm run typecheck   # checagem de tipos
-npm run build       # build de produção
-```
-
-### Onde colocar cada coisa
-
-- **Regra de negócio ou consulta nova:** em `services/`, recebendo o `AcademyContext` e filtrando por `academyId`.
-- **Validação de formulário:** em `lib/validation.ts` (Zod), com mensagens em português.
-- **Ação de formulário:** `actions.ts` da página, sempre começando com `requireAcademyAdmin()`.
-- **Mudança no banco:** edite `db/schema.ts` e rode `npm run db:generate`; revise o SQL gerado em `drizzle/`.
-
-Cuidado conhecido: em subconsultas SQL escritas à mão, refira-se à coluna externa com o nome da tabela por extenso (`fees.id`), não com `${fees.id}`. Em consultas de uma só tabela, o Drizzle omite o nome da tabela e `id` passaria a apontar para a tabela interna. Há um teste de regressão para isso.
-
-### Ferramentas
-
-- **TypeScript 6.0**, fixado de propósito: o TypeScript 7 ainda não é suportado pelo `typescript-eslint`, usado no lint do Next.js.
-- **Lint:** `npm run lint` (regras do Next.js para React, hooks e acessibilidade básica, e TypeScript).
-- **Integração contínua:** `.github/workflows/ci.yml` roda tipos, lint, testes, build e ponta a ponta com um PostgreSQL real.
-
-### Testes
-
-`tests/setup.ts` apaga o schema do banco de testes, aplica as migrations e cada teste cria a própria academia (`tests/helpers.ts`), então os testes não dependem uns dos outros.
-
-| Arquivo | O que testa |
-| --- | --- |
-| `lib.test.ts` | Funções puras, sem banco: centavos, datas e fuso, validações, CSV, Pix copia e cola, chave Pix e permissões |
-| `alunos-e-financeiro.test.ts` | Cadastro e pesquisa de alunos, isolamento entre academias, mensalidades, pagamentos e financeiro |
-| `cadastro.test.ts` | CPF e CNPJ, modalidades, menores e responsáveis, irmãos, saúde restrita, configuração inicial |
-| `convites.test.ts` | Convite, cadastro pelo convite, aprovação, vínculo, recusa e visão do aluno |
-| `contas.test.ts` | Conta de aluno sem academia, academia adicionando pelo e-mail, academia criada pela plataforma |
-| `login.test.ts` | Hash de senha, login, usuário inativo, academia suspensa e limite de tentativas |
-| `concorrencia-e-seguranca.test.ts` | Totais do filtro inteiro, paginação, consentimento, sessões e operações simultâneas |
-| `senha-recibo-e-lgpd.test.ts` | Recuperação de senha, valor por extenso, recibo, exportação e eliminação de dados |
-| `equipe.test.ts` | Suspender e reativar academias, permissões da equipe |
-| `area-do-aluno.test.ts` | Telefone do aluno, contato da academia, confirmação de e-mail, área do responsável |
-| `automacao-e-presenca.test.ts` | Tarefa diária (geração automática e lembretes, com data fixa) e presença |
-| `guardas.test.ts` | Lê o código e confere que toda tela, action e rota da academia chama a guarda com a permissão certa |
-| `e2e/*.spec.ts` | No navegador: login, pagamento, convite, contas, celular, senha e recibo, e permissões da recepção |
-
-
-#### Ponta a ponta (`tests/e2e`, Playwright)
-
-Rodam no navegador contra o build de produção e um banco próprio (`E2E_DATABASE_URL`), recriado com os dados de exemplo: login, pagamento pela busca com erro de validação e cancelamento, geração de mensalidades, convite com aprovação e área do aluno, criança com responsável, saúde e ficha, totais e paginação, e navegação no celular. Uma confirmação nativa do navegador em qualquer fluxo faz o teste falhar.
-
-Antes desses, também foram feitos testes de ponta a ponta no navegador sobre o build de produção: login, pagamento parcial e cancelamento, financeiro, auditoria, acesso a outra academia pela URL, telas no celular e no computador, busca de aluno, janela de confirmação, filtros recolhíveis, geração de mensalidades, área do aluno e o fluxo completo do convite (menor de idade barrado, cadastro, fila isolada por academia, aprovação, vínculo com aluno existente, área do aluno e revogação do código). Ele não faz parte do `npm test`.
-
-## Publicação em produção
-
-O `Dockerfile` gera uma imagem de produção que aplica as migrations pendentes e inicia o servidor na porta 3000.
-
-### Checklist
-
-1. **PostgreSQL gerenciado** (ou um container com volume persistente e backup automático).
-2. **Variáveis:** `DATABASE_URL` apontando para o banco de produção, `APP_TIMEZONE=America/Sao_Paulo`. **Não defina `COOKIE_SECURE=false`.**
-3. **HTTPS obrigatório** (o cookie de sessão é `Secure`). Use o HTTPS do provedor ou um proxy como Caddy ou Nginx.
-4. **Primeiro acesso:** `ADMIN_PASSWORD="..." npm run db:create-admin -- "Academia" "Nome" email` dentro do container. **Não rode o seed em produção.**
-5. **Backups diários** do banco. O histórico financeiro não pode ser recriado.
-6. **E-mail:** para a recuperação de senha funcionar, crie uma conta no Resend, verifique o domínio (registros SPF e DKIM no DNS) e defina `RESEND_API_KEY` e `EMAIL_FROM`. Sem isso, os e-mails só aparecem no log do servidor.
-7. **Uma instância** da aplicação, ou aceite que o limite de tentativas de login seja contado por instância.
-
-### Exemplo com a própria imagem
-
-```bash
-docker build -t kombexa .
-docker run -d -p 3000:3000 -e DATABASE_URL="postgres://usuario:senha@host:5432/fight_manager" kombexa
-docker exec -it <container> sh -c 'ADMIN_PASSWORD="..." npm run db:create-admin -- "Academia" "Nome" email@dominio.com'
-```
-
-### Observações
-
-- A imagem inclui as dependências de desenvolvimento, porque o `tsx` é usado pelos scripts de administração. Uma imagem mais enxuta (modo `standalone` do Next.js) fica como melhoria.
-- Os logs de erro saem na saída padrão do container (`docker logs`).
-- O sistema envia `noindex` para buscadores: é uma ferramenta interna.
-
-## Configurar o envio de e-mails
-
-O Kombexa envia e-mails em quatro situações:
-
-| E-mail | Quando | Para quem |
-|---|---|---|
-| Link de acesso da academia | O administrador da plataforma cria uma academia, ou gera um novo link | Responsável pela academia |
-| Recuperação de senha | Alguém usa "Esqueci minha senha" | Dono da conta |
-| Convite por e-mail | A academia envia o convite em "Convidar alunos" | Futuro aluno |
-| Teste | `npm run email:test -- destino@email.com` | Quem você escolher |
-
-Sem configuração, **nenhum e-mail é enviado**: as mensagens aparecem no console do servidor (no Docker, em `docker compose logs app`). Isso basta para desenvolver, mas não para uso real. Em especial, sem e-mail o responsável por uma academia nova não recebe o link de acesso, e a plataforma precisa copiar o link da tela e enviar por outro meio.
-
-Todos os e-mails saem em texto e em HTML simples, com os links clicáveis.
-
-### Resumo rápido
-
-1. Escolha a forma de envio: **SMTP** (a mais fácil para começar, serve Gmail, Outlook ou o e-mail do seu domínio) ou **Resend** (melhor entrega em produção, exige domínio próprio).
-2. Preencha as variáveis no `.env`, como nos exemplos abaixo.
-3. Reinicie a aplicação (`npm run dev` de novo, ou `docker compose up -d` no Docker).
-4. Teste: `npm run email:test -- seu@email.com`. No Docker: `docker compose exec app npm run email:test -- seu@email.com`.
-
-### Variáveis
-
-| Variável | Para que serve | Exemplo |
-|---|---|---|
-| `EMAIL_PROVIDER` | `smtp`, `resend` ou `console`. Vazio: escolhe sozinho (Resend se houver `RESEND_API_KEY`, senão SMTP se houver `SMTP_HOST`, senão console) | `smtp` |
-| `EMAIL_FROM` | Remetente que aparece para quem recebe. Precisa ser um endereço que o serviço autoriza você a usar | `Academia Punho de Ferro <nao-responda@punhodeferro.com.br>` |
-| `RESEND_API_KEY` | Chave da API do Resend | `re_123...` |
-| `SMTP_HOST` | Servidor SMTP | `smtp.gmail.com` |
-| `SMTP_PORT` | Porta. Use 587 (STARTTLS) ou 465 (SSL) | `587` |
-| `SMTP_SECURE` | `true` na porta 465; `false` na 587. Vazio: decide pela porta | `false` |
-| `SMTP_USER` | Usuário do SMTP (quase sempre o e-mail) | `contato@punhodeferro.com.br` |
-| `SMTP_PASS` | Senha do SMTP ou senha de app | `abcd efgh ijkl mnop` |
-| `EMAIL_OUTBOX_DIR` | Só desenvolvimento: grava cada e-mail como `.json` nesta pasta | `.outbox` |
-
-As variáveis ficam no `.env`, que não vai para o Git. Nunca coloque senhas ou chaves no código. No Docker Compose, o `docker-compose.yml` já repassa todas elas do `.env` para a aplicação.
-
-### Opção 1: SMTP
-
-Serve para qualquer provedor que ofereça SMTP. Para começar ou para pouco volume (dezenas de e-mails por dia), é o caminho mais simples.
-
-#### Gmail
-
-O Gmail não aceita a senha normal da conta por SMTP. É preciso uma **senha de app**:
-
-1. Ative a verificação em duas etapas na Conta Google (Segurança → Verificação em duas etapas).
-2. Em Segurança → Senhas de app, crie uma senha para "Kombexa". O Google mostra 16 letras; copie.
-3. No `.env`:
-
-```env
-EMAIL_PROVIDER=smtp
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=suaacademia@gmail.com
-SMTP_PASS=abcdefghijklmnop
-EMAIL_FROM=Academia Punho de Ferro <suaacademia@gmail.com>
-```
-
-No Gmail, o `EMAIL_FROM` precisa ser o próprio endereço (ou um alias configurado nele). Contas gratuitas têm limite diário de envio (em torno de 500 mensagens), suficiente para uma academia.
-
-#### Outlook / Microsoft 365
-
-```env
-EMAIL_PROVIDER=smtp
-SMTP_HOST=smtp.office365.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=contato@suaacademia.com.br
-SMTP_PASS=sua-senha-ou-senha-de-app
-EMAIL_FROM=Academia Punho de Ferro <contato@suaacademia.com.br>
-```
-
-No Microsoft 365, o administrador pode precisar liberar o "SMTP autenticado" para a caixa. Contas com verificação em duas etapas usam senha de app. Contas pessoais (outlook.com, hotmail.com) usam `smtp-mail.outlook.com`, mas a Microsoft vem restringindo SMTP nessas contas. Para uso real, prefira o e-mail do seu domínio ou o Resend.
-
-#### E-mail do seu domínio (Hostinger, Locaweb, KingHost, HostGator, cPanel...)
-
-O painel da hospedagem mostra servidor, porta e usuário na página da conta de e-mail. Alguns valores comuns (confira no seu painel, porque mudam com o tempo):
-
-| Provedor | Servidor | Porta |
-|---|---|---|
-| Hostinger | `smtp.hostinger.com` | 465 (SSL) |
-| Locaweb | `email-ssl.com.br` | 465 (SSL) |
-| KingHost | `smtp.kinghost.net` | 587 |
-| cPanel em geral | `mail.seudominio.com.br` | 465 (SSL) ou 587 |
-
-Exemplo com porta 465:
-
-```env
-EMAIL_PROVIDER=smtp
-SMTP_HOST=smtp.hostinger.com
-SMTP_PORT=465
-SMTP_SECURE=true
-SMTP_USER=nao-responda@suaacademia.com.br
-SMTP_PASS=senha-da-caixa
-EMAIL_FROM=Academia Punho de Ferro <nao-responda@suaacademia.com.br>
-```
-
-Crie uma caixa só para o sistema (por exemplo `nao-responda@`). Assim a senha do e-mail principal não fica no servidor.
-
-#### Serviços de envio com SMTP (Brevo, Amazon SES, Mailgun, SendGrid)
-
-Todos oferecem SMTP, além da API. Crie a conta, verifique o domínio (veja "Não cair no spam", abaixo), gere as credenciais SMTP no painel e preencha as mesmas cinco variáveis. Exemplo com o Brevo:
-
-```env
-EMAIL_PROVIDER=smtp
-SMTP_HOST=smtp-relay.brevo.com
-SMTP_PORT=587
-SMTP_SECURE=false
-SMTP_USER=seu-login-smtp-do-brevo
-SMTP_PASS=sua-chave-smtp-do-brevo
-EMAIL_FROM=Academia Punho de Ferro <nao-responda@suaacademia.com.br>
-```
-
-### Opção 2: Resend
-
-O Resend envia por uma chamada HTTP (sem SMTP). É a opção recomendada para produção com domínio próprio.
-
-1. Crie uma conta em https://resend.com.
-2. Em **Domains**, adicione o seu domínio (por exemplo `suaacademia.com.br`) e crie no DNS os registros que o Resend mostrar (SPF, DKIM e, de preferência, DMARC). A verificação costuma levar de minutos a algumas horas.
-3. Em **API Keys**, crie uma chave com permissão de envio.
-4. No `.env`:
-
-```env
-EMAIL_PROVIDER=resend
-RESEND_API_KEY=re_sua_chave
-EMAIL_FROM=Academia Punho de Ferro <nao-responda@suaacademia.com.br>
-```
-
-O `EMAIL_FROM` precisa usar o domínio verificado. Sem domínio verificado, o Resend só entrega para o e-mail da sua própria conta, o que serve apenas para testes.
-
-### Não cair no spam
-
-Para e-mails de um domínio próprio, três registros no DNS fazem toda a diferença. O serviço de envio (Resend, Brevo, SES, sua hospedagem) mostra os valores exatos; você só cria os registros no painel onde o domínio está (Registro.br, Cloudflare, Hostinger...).
-
-- **SPF** (registro TXT no domínio): diz quais servidores podem enviar pelo seu domínio. Exemplo: `v=spf1 include:_spf.resend.com ~all`. Tenha **um único** registro SPF; se já existir um, acrescente o `include:` nele em vez de criar outro.
-- **DKIM** (registro TXT ou CNAME): assinatura que prova que a mensagem não foi alterada. O serviço gera a chave.
-- **DMARC** (registro TXT em `_dmarc.seudominio.com.br`): diz o que fazer com mensagens que falham nas verificações. Para começar: `v=DMARC1; p=none; rua=mailto:voce@seudominio.com.br`.
-
-Outras boas práticas:
-
-- Use um remetente do mesmo domínio verificado. Um remetente `@gmail.com` enviado por outro serviço quase sempre cai no spam.
-- Mantenha um nome reconhecível no remetente, como o nome da academia.
-- Depois de configurar, envie um teste para um Gmail e confira em "Mostrar original" se SPF, DKIM e DMARC aparecem como `PASS`.
-
-### Testar a configuração
-
-```bash
-npm run email:test -- seu@email.com
-# no Docker:
-docker compose exec app npm run email:test -- seu@email.com
-```
-
-O comando mostra a forma de envio ativa, o remetente e o servidor, e envia uma mensagem de verdade. Se algo falhar, ele mostra o erro completo do serviço. Na aplicação, uma falha de envio não interrompe a ação principal: a academia é criada e o pedido de senha é registrado, e o erro vai para o log do servidor. Por isso, teste antes de colocar em uso.
-
-### Em desenvolvimento
-
-Sem configurar nada, os e-mails aparecem no terminal de `npm run dev`:
-
-```text
-[e-mail de desenvolvimento] para admin@academia.dev
-Assunto: Redefinir sua senha no Kombexa
-...
-```
-
-Para guardar cada e-mail como arquivo, use `EMAIL_OUTBOX_DIR=.outbox`. Para ver os e-mails numa caixa de entrada falsa, com HTML, rode um servidor de teste como o Mailpit (`docker run -p 1025:1025 -p 8025:8025 axllent/mailpit`) e configure:
-
-```env
-EMAIL_PROVIDER=smtp
-SMTP_HOST=localhost
-SMTP_PORT=1025
-SMTP_SECURE=false
-```
-
-As mensagens aparecem em http://localhost:8025. No Docker Compose, use o nome do serviço do Mailpit no lugar de `localhost`.
-
-### Problemas comuns
-
-| Mensagem ou sintoma | Causa provável | O que fazer |
-|---|---|---|
-| `Invalid login: 535` | Usuário ou senha do SMTP errados | No Gmail e no Outlook, use senha de app. Confira se `SMTP_USER` é o e-mail completo |
-| `Greeting never received` ou `Connection timeout` | Porta bloqueada ou `SMTP_SECURE` trocado | Porta 465 pede `SMTP_SECURE=true`; porta 587 pede `false`. Alguns provedores de nuvem bloqueiam a porta 25 e às vezes a 587: tente a 465 |
-| `wrong version number` / `SSL routines` | `SMTP_SECURE=true` na porta 587 | Use `SMTP_SECURE=false` na 587 |
-| `self-signed certificate` | Servidor da hospedagem com certificado próprio | Use o nome de servidor que o provedor indica (normalmente com o certificado certo) |
-| `Resend respondeu 403` | Domínio não verificado ou `EMAIL_FROM` de outro domínio | Termine a verificação do domínio e use um remetente dele |
-| `Resend respondeu 422` | `EMAIL_FROM` mal formatado | Use `Nome <email@dominio>` |
-| O teste funciona, mas o e-mail não chega | Caiu no spam | Configure SPF, DKIM e DMARC (veja acima) |
-| Nada acontece e o log mostra `[e-mail de desenvolvimento]` | Nenhuma forma de envio configurada | Preencha o `.env` e reinicie a aplicação |
-| No Docker, o `.env` foi alterado e nada mudou | O contêiner não foi recriado | `docker compose up -d` (recria com as novas variáveis) |
-
-### Onde está o código
-
-- `lib/email/index.ts`: escolha da forma de envio, Resend, SMTP e o HTML dos e-mails.
-- `scripts/email-test.ts`: o comando `npm run email:test`.
-- Textos dos e-mails: `services/accounts.ts` (acesso da academia), `services/password-reset.ts` (senha) e `services/invites.ts` (convite).
-- Testes: os testes automatizados trocam o envio por uma caixa em memória (`useMailer(memoryMailer())`), então nunca enviam e-mails de verdade.
-
-## Backup, restauração e monitoramento
-
-### Backup automático
-
-Com Docker Compose, o serviço `backup` faz um `pg_dump` por dia em `./backups` e apaga os arquivos com mais de `BACKUP_KEEP_DAYS` dias (padrão: 14).
-
-```bash
-docker compose up -d backup          # liga o backup diário
-docker compose logs backup           # confere se rodou
-docker compose run --rm backup sh /backup.sh   # backup agora, fora do horário
-```
-
-Sem Docker: `DATABASE_URL=postgres://... BACKUP_DIR=/caminho sh scripts/backup.sh` (agende no cron, por exemplo `0 3 * * *`).
-
-**Importante:** um backup guardado só no mesmo servidor some junto com ele. Copie `./backups` para outro lugar (outro servidor, um bucket S3/R2/Backblaze, Google Drive com rclone).
-
-### Restaurar
-
-```bash
-# banco vazio de destino
-createdb -U fight fight_manager_restaurado
-pg_restore --no-owner --dbname=postgres://fight:fight@localhost:5432/fight_manager_restaurado backups/kombexa-AAAA-MM-DD_HHMM.dump
-```
-
-Teste a restauração de vez em quando: backup que nunca foi restaurado não é garantia.
-
-### Monitoramento
-
-- **Erros do servidor:** cada erro vira uma linha JSON no log (`"level":"error"`, com rota e código). Com `ERROR_WEBHOOK_URL`, também chega um aviso curto no Discord, Slack ou ntfy. O aviso não leva dados de alunos.
-- **Disponibilidade:** `GET /api/saude` responde `{"ok":true}` quando o sistema e o banco estão no ar (status 503 se o banco cair). Cadastre essa URL num monitor gratuito como UptimeRobot ou Better Stack.
-
-### Tarefa diária (mensalidades automáticas e lembretes)
-
-`POST /api/tarefas/diarias` com o cabeçalho `Authorization: Bearer <CRON_SECRET>`. Sem `CRON_SECRET` (mínimo de 16 caracteres), a rota responde 401 e nada roda. No Docker Compose, o serviço `scheduler` chama de hora em hora; fora dele, use o cron do servidor com `npm run jobs:daily`. A tarefa é idempotente: rodar várias vezes no mesmo dia não gera mensalidade nem lembrete repetido. Defina `APP_URL` com o endereço público, para os links dos e-mails.
-
-## Problemas comuns
-
-**"DATABASE_URL não configurada"**: crie o `.env` a partir do `.env.example` (sem Docker) ou confira o `docker-compose.yml`.
-
-**A aplicação não conecta ao banco no Docker**: o host do banco dentro do Compose é `db`, não `localhost`. Veja o estado com `docker compose ps` e os logs com `docker compose logs db`.
-
-**Login não funciona no build de produção sem HTTPS**: em produção o cookie de sessão é `Secure`. No `docker compose` local isso já vem desligado (`COOKIE_SECURE=false`). Não desligue em um servidor público.
-
-**"Muitas tentativas"**: espere 15 minutos ou reinicie o servidor (a contagem fica em memória).
-
-**A porta 5432 está em uso**: outro PostgreSQL está rodando. Pare-o ou troque a porta publicada no `docker-compose.yml`.
-
-**Os testes apagaram meus dados**: `TEST_DATABASE_URL` precisa apontar para um banco separado (`fight_manager_test`). Os testes recriam esse banco do zero a cada execução.
-
-**Mensalidade não aparece como atrasada no dia do vencimento**: é o comportamento esperado. Ela só fica atrasada a partir do dia seguinte, no horário de Brasília.
-
-**Não consigo editar uma mensalidade**: ela já recebeu pagamento. Cancele o pagamento primeiro.
-
-### Limitações conhecidas
-
-- Páginas de registro inexistente (ou de outra academia) mostram a mensagem de "não encontrado", mas respondem com status HTTP 200 em vez de 404, por causa do carregamento em streaming do Next.js. Nenhum dado é exibido.
-- Não há paginação: as listas mostram até 100 ou 200 registros e os filtros encontram os demais.
-- A execução com Docker foi preparada, mas **não foi testada no ambiente em que o projeto foi desenvolvido** (sem Docker disponível). Migrations, testes e build de produção foram verificados contra um PostgreSQL real fora de container.
+| Ver logs da aplicação | `docker compose logs -f app` |
+| Ver logs do banco | `docker compose logs -f db` |
+| Parar (mantém os dados) | `docker compose down` |
+| Parar e **apagar o banco** | `docker compose down -v` |
+| Reconstruir após mudar o código | `docker compose up -d --build` |
+
+> **Antes de usar o compose num servidor real**, leia [SEGURANCA.md](SEGURANCA.md), seção "Docker Compose em produção". Os valores padrão de `CRON_SECRET`, `SHOW_TEST_ACCOUNTS` e a porta do banco publicada são pensados para uso local.
+
+---
+
+## 12. Problemas comuns
+
+| Sintoma | Causa provável | Solução |
+| --- | --- | --- |
+| `DATABASE_URL não configurada` | Falta o `.env` | Passo 4 |
+| `password authentication failed for user "fight"` | Usuário ou senha diferentes do `.env` | Refaça o passo 5 ou ajuste `DATABASE_URL` |
+| `ECONNREFUSED 127.0.0.1:5432` | PostgreSQL parado | Inicie o serviço do PostgreSQL |
+| `permission denied for schema public` ao rodar `npm test` | O banco de teste não pertence ao usuário `fight` | Crie com `OWNER fight` (passo 5) |
+| Login "não funciona" com `npm start` em http | Cookie `Secure` exige HTTPS | `COOKIE_SECURE=false` só localmente |
+| "Muitas tentativas. Aguarde 15 minutos" | Limite de 5 erros por e-mail (em memória) | Espere ou reinicie o servidor |
+| A porta 3000 está ocupada | Outro processo | `npm run dev -- -p 3001` |
+| Seed no Docker diz "bloqueado em produção" | Container em produção | Use `-e ALLOW_SEED=1` (veja acima) |
+| `npm run test:e2e` não acha o navegador | Playwright sem Chromium | `npx playwright install chromium` |
+| `npm run test:e2e` falha logo no início | Faltou o build | `npm run build` antes |
+| E-mails não chegam | Envio não configurado | `npm run email:test -- seu@email.com` mostra o que está configurado; guia em `projeto/docs/instalacao.md`, seção "Configurar o envio de e-mails" |
+| Links dos e-mails apontam para `localhost` em produção | `APP_URL` não foi trocada | Defina `APP_URL=https://seu-dominio` |
