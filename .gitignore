@@ -14,3 +14,8 @@ test-results/
 
 # backups do banco (scripts/backup.sh)
 /backups
+
+# Arquivos locais da auditoria - não publicar
+docs/backup-original/
+docs/logs/
+docs/alteracoes-auditoria.patch
